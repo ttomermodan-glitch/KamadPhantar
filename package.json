@@ -1,0 +1,8 @@
+{
+  "name": "news404-case-study",
+  "version": "1.0.0",
+  "description": "מקרה בוחן דוברותי בזמן אמת: משתתפים, מפקדים, מסך הקרנה ואדמין",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

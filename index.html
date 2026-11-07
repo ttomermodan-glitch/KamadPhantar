@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מקרה בוחן · נחלון</title>
+<link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f0e8;--bg2:#e7e0d3;--panel:#fff;--panel2:#f8f4ec;--ink:#1b2230;--mut:#667085;--line:#ddd5c7;--red:#e5384a;--teal:#17877f;--amber:#c98400;--tc:#e5384a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080c13;--bg2:#101828;--panel:#141d2e;--panel2:#0e1522;--ink:#f1f3f7;--mut:#93a0b5;--line:#24324a;--red:#ff4757;--teal:#35d0c0;--amber:#ffb703}}
+:root[data-theme="dark"]{--bg:#080c13;--bg2:#101828;--panel:#141d2e;--panel2:#0e1522;--ink:#f1f3f7;--mut:#93a0b5;--line:#24324a;--red:#ff4757;--teal:#35d0c0;--amber:#ffb703}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:radial-gradient(1100px 560px at 50% -8%,var(--bg2),var(--bg));background-attachment:fixed;color:var(--ink);font:17px/1.55 Assistant,Arial,sans-serif}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.14;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px}
+h1,h2,h3,.big,.code,.clock{font-family:"Secular One",Assistant,Arial,sans-serif;font-weight:400;margin:0 0 8px}
+h1{font-size:40px;line-height:1.1}h2{font-size:28px}h3{font-size:20px}
+.hero{background:linear-gradient(90deg,var(--ink),var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge,.chip{display:inline-block;padding:3px 13px;border-radius:99px;font-weight:800;font-size:14px;letter-spacing:.04em}
+.badge{background:var(--red);color:#fff}
+.chip{border:1.5px solid var(--tc);color:var(--tc);background:color-mix(in srgb,var(--tc) 12%,transparent)}
+.tick{display:flex;gap:12px;align-items:center;padding:10px 14px;background:linear-gradient(90deg,#1b060a,#2d0a12);color:#fff;border-bottom:2px solid var(--red)}
+.live{display:flex;align-items:center;gap:7px;background:var(--red);padding:2px 11px;border-radius:5px;font-weight:800;font-size:14px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:bl 1.4s steps(2) infinite}
+.mqw{flex:1;min-width:0;overflow:hidden}.mq{display:inline-block;white-space:nowrap;padding-inline-start:100%;animation:mq 24s linear infinite;opacity:.9}
+.snd{background:none;border:0;font-size:18px;padding:0 4px;color:#fff}
+@keyframes bl{50%{opacity:.15}}@keyframes mq{to{transform:translateX(100%)}}@keyframes slam{from{opacity:0;transform:scale(1.5)}}@keyframes pop{from{opacity:0;transform:translateY(8px)}}@keyframes fade{from{opacity:0}}@keyframes flr{from{background:#e63946}}
+main{max-width:900px;margin:auto;padding:0 14px 36px}
+.card{background:linear-gradient(165deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.card.tc{border-top:4px solid var(--tc)}
+.win{border-color:var(--amber)!important;box-shadow:0 0 0 1px var(--amber),0 14px 44px rgba(255,183,3,.22)!important}
+.mut{color:var(--mut);font-size:15px}.err{color:var(--red);min-height:1.4em;font-weight:600}.ok{color:var(--teal);font-weight:800}
+input,textarea{display:block;width:100%;box-sizing:border-box;padding:14px;margin:8px 0 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--tc)}
+.codein{text-align:center;font:34px "Secular One",Arial,sans-serif;letter-spacing:.3em}
+button{cursor:pointer;font-family:inherit}
+.pri{width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--red),#ff7a45);color:#fff;font:inherit;font-weight:800;font-size:18px;box-shadow:0 8px 22px rgba(255,71,87,.35)}
+.ring{position:relative;width:150px;height:150px;margin:6px auto 12px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:9}.rb{stroke:var(--line)}.rf{stroke:var(--teal);stroke-linecap:round}.ring.hot .rf{stroke:var(--red)}
+.ring .clock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;margin:0;font-size:38px}
+.clock.hot{color:var(--red);animation:bl 1s steps(2) infinite}
+.learn{border-inline-start:4px solid var(--amber);padding:4px 12px;margin-top:14px}
+.flash{background:var(--red);color:#fff;padding:11px 13px;border-radius:12px;font-weight:800}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.cols .card{margin:6px 0}
+.tile{border:1.5px solid var(--tc);border-radius:14px;padding:10px;text-align:center;background:color-mix(in srgb,var(--tc) 8%,transparent)}
+.tile .code{color:var(--tc);font-size:42px;letter-spacing:.1em;margin:4px 0}
+.it{border-inline-start:3px solid var(--tc);padding:6px 12px;margin:10px 0;background:color-mix(in srgb,var(--tc) 6%,transparent);border-radius:8px}.it p{margin:2px 0}
+.names{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}.tile .chip{font-size:15px}
+.slam{animation:slam .5s cubic-bezier(.2,1.5,.4,1)}
+.post{margin:6px 0;padding:9px 12px;background:var(--bg);border-radius:12px;font-size:15px}.post.new{animation:pop .4s ease-out}
+.dots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:8px 0 14px}.dots i{width:14px;height:14px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--teal)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.g3 b{display:block;font:34px "Secular One",Arial,sans-serif}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ctl button{padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit;font-weight:700}
+.ctl button:active{transform:scale(.97)}.ctl button:disabled{opacity:.35}
+.ctl .go{background:linear-gradient(135deg,var(--red),#ff7a45);color:#fff;border-color:transparent}
+.code{font-size:60px;letter-spacing:.12em}
+.scr h2{font-size:clamp(30px,6vw,56px)}.scr p{font-size:clamp(19px,3vw,28px)}.scr .ring{width:220px;height:220px}.scr .ring .clock{font-size:60px}
+.lnk{background:none;border:0;color:var(--mut);font:inherit;font-size:14px;text-decoration:underline;padding:8px}
+.pv{border:2px dashed var(--line);border-radius:14px;padding:6px 12px}.pv .card{border:0;background:none;box-shadow:none;padding:6px 0}.pv .scr .ring{width:110px;height:110px}.pv .scr .ring .clock{font-size:30px}.pv .scr h2{font-size:26px}.pv .scr p{font-size:18px}
+details{margin:10px 0}summary{cursor:pointer;font-weight:800;margin:8px 0}
+.st{background:none;border:0;font-size:28px;color:var(--line);padding:2px}.st.on{color:var(--amber)}
+.cin{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 0,#1a2340,#04060a 70%);color:#eef1f5;border-radius:18px;padding:64px 22px;margin:14px 0;min-height:380px}
+.cin::before,.cin::after{content:"";position:absolute;inset-inline:0;height:34px;background:#000}.cin::before{top:0}.cin::after{bottom:0}
+.cin p{font-size:clamp(20px,4vw,34px);margin:16px 0;opacity:.5}.cin p.last{opacity:1}.cin p.new{animation:fade 1.4s ease-out}
+.cin p.tm{font:clamp(34px,7vw,64px) "Secular One",Arial,sans-serif;opacity:1;color:var(--red)}
+.cin .jump{background:var(--red);color:#fff;padding:14px;border-radius:10px;font-weight:800;opacity:1}.cin .jump.new{animation:slam .45s cubic-bezier(.2,1.5,.4,1)}
+.cin.fl{animation:flr .7s}.cin .mut{color:#9aa6b8}.cin .learn{font-size:18px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body><div id="hd"></div><main id="app"></main>
+<script>
+let TC={},CC="";const RL=180;
+const T={j:["עיתונאות","📰"],s:["דוברות","🎙️"],n:["רשתות","📱"]},TK=["j","s","n"],PHS=["lobby","story","r1","twist","r2","show","win"];
+const TCL={j:"#3db8ff",s:"#ffb703",n:"#ff5d8f"};
+const NEWS="מבזק: דיווח על ירי באזור נחלון · כוחות בדרך לנקודה · הפרטים בבדיקה";
+const FL=`<p class="flash">מבזק פתע: כלי תקשורת מפרסם ״אירוע ירי קשה״ ללא אישור רשמי.</p>`;
+const EX=["התקבל דיווח על דריסה במרחב עטרת שבחטיבת בנימין, הפרטים בבדיקה. כוחות צה״ל קפצו לנקודה.","לפני זמן קצר, שוגר מיירט לעבר מטרת שווא במרחב בו פועלים כוחות צה״ל בדרום לבנון. לא הופעלו התרעות על פי מדיניות.","לפני זמן קצר, שוגר מיירט לעבר מטרה אווירית חשודה שזוהתה במרחב בו פועלים כוחות צה״ל בדרום לבנון. לא הופעלו התרעות על פי מדיניות.","לפני זמן קצר הופעלה התרעה ביישומון פיקוד העורף על חשש לחדירת מחבלים באביתר שבחטיבת שומרון. פרטי האירוע בבדיקה. צה״ל נמצא בקשר שוטף עם התושבים וגורמי הביטחון במרחב.","התקבל דיווח על ירי במרחב חומש שבחטיבת שומרון, הפרטים בבדיקה. כוחות צה״ל קפצו לנקודה."];
+const ST={
+story:{t:"08:10 · דיווח ראשוני על ירי",d:"בשעה 08:10 התקבל דיווח על ירי באזור נחלון, יישוב בדיוני בגזרה הצפונית. סרטון קצר מתפשט ברשת, ועיתונאים כבר פונים לדוברות. אתם מערך הדוברות: עיתונאות כותבת את המידע, דוברות מוציאה את ההודעה הראשונה לתקשורת, ורשתות מפיצות. הפרטים עדיין בבדיקה, וצריך להוציא מסר ראשון תוך דקות. כולם חייבים לדבר בקול אחד."},
+twist:{t:"08:50 · שינוי בסיפור",d:"התברר שלא היה ירי: הרעש נגרם מיירוט מטרת שווא במרחב סמוך. ההתרעה שהופעלה ביישוב גרמה לבהלה ותושבים נכנסו למרחבים מוגנים, בעוד כלי תקשורת כבר דיווחו על ״אירוע ירי״. המערך צריך לתקן את המסר בכל הערוצים."}};
+const CIN={
+story:[[0,"08:10"],[3,"בגזרה הצפונית עוד שקט."],[8,"בחדר הדוברות הטלפונים שותקים."],[14,"הקפה מתקרר. השעון מתקתק."],[20,"ואז..."],[24,"JUMP:התקבל דיווח על ירי באזור נחלון."],[29,"סרטון של עשר שניות כבר מתפשט ברשת."],[35,"עיתונאים מתקשרים. הפרטים עדיין בבדיקה."],[42,"אתם מערך הדוברות: עיתונאות כותבת, דוברות מוציאה את ההודעה הראשונה, ורשתות מפיצות."],[50,"מסר אחד. קול אחד. תוך דקות."]],
+twist:[[0,"08:50"],[4,"בשטח מתבררת תמונה אחרת."],[10,"הכוחות הגיעו לנקודה ומחפשים עדים."],[16,"ושקט."],[20,"JUMP:לא היה ירי."],[25,"הרעש נגרם מיירוט מטרת שווא במרחב סמוך."],[31,"ההתרעה ביישוב הופעלה, ותושבים נכנסו למרחבים מוגנים."],[38,"ובינתיים, כלי תקשורת כבר דיווחו על ״אירוע ירי״."],[45,"המערך צריך לתקן את המסר בכל הערוצים."]]};
+const LB=["קונספט בשורה אחת","קאפשן לסרטון"];
+const R={
+r1:{t:"08:15 · הסבב הראשון",l:"בדקות הראשונות מוציאים סמס קצר: מה התקבל, איפה, שהפרטים בבדיקה ושכוחות בדרך. בלי להניח הנחות.",
+j:{q:"כתבו גג ובאנר לדיווח הראשוני על הירי באזור נחלון.",f:["גג (עד 15 מילים)","באנר (עד 6 מילים)"]},
+s:{q:"כתבו סמס ראשוני לתקשורת. הכי קצר שאפשר, עד שלוש דקות, לפי הסיטואציה. הפרטים עדיין בבדיקה.",f:["הסמס הראשוני"],ex:1},
+n:{q:"הציעו קונספט לסרטון בשורה אחת, וכתבו לו קאפשן.",f:LB}},
+r2:{t:"09:00 · הסבב השני",l:"כשהתמונה מתבררת מתקנים מהר, בשקיפות ובשפה פשוטה, ומעדכנים את כל הערוצים באותו מסר.",
+j:{q:"כתבו מבזק של שורה אחת על ההתפתחות החדשה.",f:["מבזק (עד 12 מילים)"]},
+s:{q:"התמונה התבררה. כתבו סמס מעדכן וקצר שמתקן את הדיווח הראשוני.",f:["הסמס המעדכן"],ex:1},
+n:{q:"הציעו קונספט בשורה אחת לעדכון או להבהרה, וכתבו לו קאפשן.",f:LB}}};
+const FD={r1:["שמעתי ירי? מישהו יודע מה קורה בנחלון?","קיבלתי התרעה בטלפון, הילדים כבר בממ״ד","הצבא שותק. מישהו יכול להגיד משהו?"],r2:["אז לא היה ירי?! כולם נבהלו","מי הפעיל את ההתרעה? מבקשים הסבר","תיקון חשוב: המידע הראשון היה שגוי"]};
+const HN=["נחלון_לייב","רוני88","חדשות_בקצרה"],BN=["דנה","יואב","מיכל","רון","שיר","עומר","נועה","איתי","תמר","גיא","לי","אורי"];
+const B={
+r1:{j:[["דיווח על ירי באזור נחלון בצפון: כוחות צה״ל בדרך לנקודה, הפרטים בבדיקה","דיווח על ירי בנחלון"],["חשש לאירוע ביטחוני בגזרה הצפונית: כוחות פועלים בשטח","אירוע בגזרה הצפונית"],["תושבים דיווחו על ירי בנחלון, צה״ל בודק את הנסיבות","דיווח על ירי בצפון"]],
+s:[["התקבל דיווח על ירי במרחב נחלון, הפרטים בבדיקה. כוחות צה״ל קפצו לנקודה."],["התקבל דיווח על אירוע ביטחוני במרחב נחלון. הפרטים בבדיקה."],["לפני זמן קצר התקבל דיווח על ירי במרחב נחלון. כוחות צה״ל בנקודה והפרטים בבדיקה."]],
+n:[["מפה של הגזרה עם נקודה מהבהבת וקול רגוע: ״בודקים ונעדכן״","הפרטים בבדיקה. נעדכן ברגע שיהיה מידע מאומת 🙏"],["מבט מהיציאה של כוח לשטח, בלי טקסט מיותר","כוחות בדרך. מידע רשמי יפורסם רק מכאן."],["טקסט על רקע שחור: ״מה שיודעים עכשיו ומה עדיין בבדיקה״","מה ידוע, מה בבדיקה, ואיפה מעדכנים."]]},
+r2:{j:[["צה״ל: לא היה ירי במרחב נחלון, הרעש נגרם מיירוט מטרת שווא"],["התרעת שווא בנחלון: אין אירוע ירי, תושבים יצאו מהמרחבים המוגנים"],["הצבא מבהיר: מדובר ביירוט מטרת שווא ולא בירי לעבר היישוב"]],
+s:[["לפני זמן קצר שוגר מיירט לעבר מטרת שווא במרחב נחלון. לא היה ירי לעבר היישוב."],["בבדיקה ראשונית עולה כי לא היה ירי. שוגר מיירט לעבר מטרת שווא."],["נבדק ונמצא: לא היה אירוע ירי במרחב נחלון. התושבים יכולים לחזור לשגרה."]],
+n:[["ציר זמן של דקה: הדיווח, הבדיקה וההבהרה","עדכון: לא היה ירי. נשארים עם מידע רשמי בלבד."],["דובר צה״ל מסביר בקצרה מה קרה ומה לא","הבהרה מהירה, לפני שהשמועה מקדימה אותנו."],["גרפיקה: ״מה אמרנו בהתחלה, ומה התברר״","מעדכנים בשקיפות: זה מה שהתברר."]]}};
+let V="join",ERR="",AE="",AUTH=0,LINK=0,RM=null,TOK="",ME=null,ES=null,SOUND=0,AC=null,LS="",LT=0,HDL="",EXO=0,CM=0,CMN="",MY={},LN=0,LK="",DR={c:"",n:"",t:"j"},DF={};
+const fresh=()=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,sub:[],sent:{},shown:0,bi:0,joined:0,locked:0,name:"",trk:"j",demo:0,solo:0,age:0,auto:0,rw:0,cmp:0,rt:{},pend:[],ros:[],wait:0,wn:0,sid:0,pid:0});
+const G=fresh();
+const pad=n=>String(n).padStart(2,"0"),esc=s=>String(s).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
+const isR=()=>/^r\d$/.test(G.ph),np=()=>G.np||0,tm=()=>Math.floor(G.t/60)+":"+pad(G.t%60);
+const cn=()=>G.cn||0;
+const ttl=p=>p==="lobby"?"טרם התחיל":p==="show"?"תצוגת הרעיונות":p==="win"?"המנצחים":(ST[p]||R[p]).t;
+function order(){const L=TK.map(t=>G.sub.filter(x=>x.t===t)),o=[];for(let i=0;i<Math.max(0,...L.map(l=>l.length));i++)L.forEach(l=>{if(l[i])o.push(l[i])});return o}
+async function api(p,b){try{const r=await fetch("/api/"+p,{method:"POST",headers:{"Content-Type":"application/json","x-tok":TOK},body:JSON.stringify(b||{})});return await r.json()}catch(e){return{err:"אין חיבור לשרת."}}}
+function submit(){if(!isR()||G.lock||G.sent[G.ph]||!ME)return;const k=R[G.ph][G.trk],a=k.f.map((_,i)=>(DF["f"+i]||"").trim());if(!a[0])return;api("sub",{id:ME.id,a}).then(r=>{if(r.err)ERR=r.err;else{DF={};if(navigator.vibrate)navigator.vibrate(40)}draw()})}
+function rate(id,n){if(!ME)return;MY[id]=n;api("rate",{cid:ME.id,sid:id,n});draw()}
+function winv(){const W=G.W||[];return `<div class="cols">${TK.map((t,i)=>{const w=W[i];return `<div class="card tc ${i<G.wn&&w?"win":""} ${i===G.wn-1&&G.age<1?"slam":""}" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3>${i<G.wn?(w?`<div class="big" style="font-size:44px">🏆</div>${w.a.map(a=>`<p>${esc(a)}</p>`).join("")}<p class="mut">${esc(w.by)} · ${"★".repeat(Math.round(w.v))} ${w.v.toFixed(1)}</p>`:`<p class="mut">לא נאספו דירוגים.</p>`):`<p class="mut">ממתינים להכרזה...</p>`}</div>`}).join("")}</div>`}
+function cmdv(){const p=G.ph;
+if(p==="lobby")return `<div class="card"><h2>🎖️ ${esc(CMN)}</h2><p>ממתינים להתחלה. כשיגיעו תוצרים תראו אותם כאן בזמן אמת ותדרגו אותם מ־1 עד 5 כוכבים.</p><button class="lnk" onclick="CM=0;draw()">יציאה</button></div>`;
+if(p==="story"||p==="twist")return stc();
+if(p==="win")return winv();
+const o=LN;LN=G.sub.length;
+return `<div class="card">${clock()}<h3>🎖️ התוצרים בזמן אמת</h3><p class="mut">${G.sub.length} תוצרים עד עכשיו. דרגו כל תוצר מ־1 עד 5 כוכבים.</p></div>`+G.sub.map((x,i)=>`<div class="card ${i>=o?"slam":""}"><p class="mut">${T[x.t][1]} ${T[x.t][0]} · סבב ${x.r==="r1"?1:2} · ${esc(x.by)}</p>${x.a.map(a=>`<p>${esc(a)}</p>`).join("")}<div>${[1,2,3,4,5].map(n=>`<button class="st ${n<=(MY[x.id]||0)?"on":""}" onclick="rate(${x.id},${n})">★</button>`).join("")}</div></div>`).reverse().join("")}
+function pendv(){return G.pend.length?`<div class="card"><h3>ממתינים לאישור כניסה</h3>${G.pend.map(e=>`<div class="it"><b>${esc(e.n)}</b> · ${T[e.t][1]} ${T[e.t][0]}<div class="ctl"><button class="go" onclick="act('ok',${e.id})">אשר</button><button onclick="act('no',${e.id})">דחה</button></div></div>`).join("")}</div>`:""}
+async function doJoin(){const r=await api("join",{code:DR.c.trim(),name:DR.n.trim()});if(r.err){ERR=r.err;draw();return}ERR="";ME={id:r.id,role:r.role};try{sessionStorage.setItem("me",JSON.stringify(ME))}catch(e){}if(r.role==="c"){CM=1;CMN=r.name;LN=0}connect();draw()}
+function act(a,k){api("act",{a,k})}
+function roster(t){return G.ros.filter(x=>x.t===t).map(x=>x.n)}
+function clock(){if(!isR())return"";const n=Math.max(np(),cn());const hot=G.t<=10&&!G.lock;return `<div id="rg" class="ring ${hot?"hot":""}"><svg viewBox="0 0 120 120"><circle class="rb" cx="60" cy="60" r="52"/><circle id="rf" class="rf" cx="60" cy="60" r="52" stroke-dasharray="327" stroke-dashoffset="${(327*(1-Math.min(1,G.t/RL))).toFixed(1)}"/></svg><div id="clk" class="clock ${hot?"hot":""}">${tm()}</div></div><p class="mut" style="text-align:center">${cn()} מתוך ${n} שלחו</p><div class="dots">${Array.from({length:n},(_,i)=>`<i class="${i<cn()?"on":""}"></i>`).join("")}</div>`}
+function feed(){const f=FD[G.ph]||[],n=G.lock?f.length:Math.min(f.length,1+Math.floor(G.age/20));return `<div class="card"><h3>הרשת מגיבה</h3>${f.slice(0,n).map((x,i)=>`<p class="post ${i===n-1&&!G.lock&&G.age%20===0?"new":""}"><b>@${HN[i]}</b> ${x}</p>`).join("")}</div>`}
+function stc(){const Z=CIN[G.ph],v=Z.filter(b=>b[0]<=G.age),jp=v.some(b=>b[0]===G.age&&b[1].startsWith("JUMP")),end=Z[Z.length-1][0]+2;
+return `<div class="cin ${jp?"fl":""}">${v.map((b,i)=>{const j=b[1].startsWith("JUMP:");return `<p class="${j?"jump":""} ${i===0?"tm":""} ${i===v.length-1?"last":""} ${b[0]===G.age?"new":""}">${j?b[1].slice(5):b[1]}</p>`}).join("")}${G.age>end?`<p class="mut">הסבב יפתח בקרוב...</p>`:""}${G.ph==="twist"&&G.age>end?`<p class="learn">${R.r1.l}</p>`:""}</div>`}
+function gal(){const o=order(),v=o.slice(0,G.shown),last=v[v.length-1];return `<div class="cols">${TK.map(t=>`<div class="card tc" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3>${v.filter(x=>x.t===t).map(x=>`<div class="it ${x===last&&G.age<1?"slam":""}"><span class="mut">סבב ${x.r==="r1"?1:2} · ${esc(x.by)}</span>${x.a.map(a=>`<p>${esc(a)}</p>`).join("")}</div>`).join("")||`<p class="mut">ממתינים לרעיונות...</p>`}</div>`).join("")}</div>`+(G.shown>=o.length&&o.length?`<div class="card"><h3>מה למדנו על המערך</h3><p class="learn">${R.r1.l}</p><p class="learn">${R.r2.l}</p></div>`:"")}
+function joinUI(){return `<div style="padding:26px 4px 6px"><span class="badge">מקרה בוחן</span><h1 class="hero" style="margin-top:14px">נחלון, 08:10</h1><p class="mut">הקלידו את קוד הכניסה שקיבלתם. הקוד קובע את המגמה שלכם.</p></div><div class="card"><input class="codein" inputmode="numeric" maxlength="5" placeholder="• • • • •" value="${esc(DR.c)}" oninput="DR.c=this.value"><input maxlength="20" placeholder="שם או כינוי" value="${esc(DR.n)}" oninput="DR.n=this.value"><button class="pri" onclick="doJoin()">הצטרפות</button><p class="err">${ERR}</p><p class="mut">מי שמצטרף אחרי שהמשחק התחיל ממתין לאישור המנהל.</p></div><p style="text-align:center;margin-top:30px"><button class="lnk" onclick="go('alogin')">כניסה אדמין</button></p>`}
+function waitv(){return `<div class="card"><h2>ממתינים לאישור</h2><p>הבקשה נשלחה למנהל. תיכנסו ברגע שיאשר אתכם.</p></div>`}
+function play(){const p=G.ph;
+if(p==="lobby")return `<div class="card tc" style="--tc:${TCL[G.trk]}"><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><h2 style="margin-top:12px">✓ הצטרפת, ${esc(G.name)}.</h2><p>${np()===1?"אתם לבד בחדר, וזה בסדר.":np()+" משתתפים בחדר."} המנהל יתחיל בקרוב.</p></div>`;
+if(p==="story"||p==="twist")return stc();
+if(p==="show")return gal();
+if(p==="win")return winv();
+const k=R[p][G.trk];
+return `<div class="card tc" style="--tc:${TCL[G.trk]}">${clock()}<h2 class="${G.age<1?"slam":""}">${R[p].t}</h2><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><p style="margin-top:12px">${k.q}</p>${k.ex?`<details ${EXO?"open":""} ontoggle="EXO=this.open"><summary>דוגמאות רשמיות של צה״ל</summary>${EX.map(x=>`<p class="post">${x}</p>`).join("")}</details>`:""}${G.fl?FL:""}${G.sent[p]?`<p class="ok">נשלח. מחכים לשאר המחלקה.</p>`:G.lock?`<p class="mut">הזמן נגמר.</p>`:k.f.map((f,i)=>`<label class="mut">${f}</label><textarea id="f${i}" maxlength="${i?100:220}" rows="2" oninput="DF.f${i}=this.value">${esc(DF["f"+i]||"")}</textarea>`).join("")+`<button class="pri" onclick="submit()">שליחה</button>`}</div>`+feed()}
+function screen(){
+if(!AUTH&&!LINK)return `<div class="card scr"><h2>ממתינים לאדמין</h2><p class="mut">פתחו את לוח הבקרה בטלפון כדי לחבר את המסך.</p></div>`;
+const p=G.ph;
+if(p==="lobby")return `<div class="card scr"><h2>הצטרפו בקוד</h2><div class="cols">${TK.map(t=>`<div class="tile" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3><div class="code">${TC[t]}</div><div class="names">${roster(t).map(n=>`<span class="chip">${T[t][1]} ${esc(n)}</span>`).join("")||`<span class="mut">ממתינים לראשון...</span>`}</div><p class="mut">${roster(t).length} הצטרפו</p></div>`).join("")}</div><p>${np()} משתתפים בחדר</p></div>`;
+if(p==="story"||p==="twist")return `<div class="scr">${stc()}</div>`;
+if(p==="show")return `<div class="scr">${gal()}</div>`;
+if(p==="win")return `<div class="scr">${winv()}</div>`;
+return `<div class="card scr">${clock()}<h2 class="${G.age<1?"slam":""}">${R[p].t}</h2>${G.fl?FL:""}</div><div class="cols">${TK.map(t=>`<div class="card tc" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3><p>${R[p][t].q}</p></div>`).join("")}</div>`+feed()}
+function admin(){const i=PHS.indexOf(G.ph),nx=PHS[i+1],r=isR(),L=G.ph==="lobby",d=c=>c?"disabled":"";
+const pre=nx?({story:"הצגת הסיפור",r1:"הסבב הראשון",twist:"שינוי בסיפור: ההתרעה התבררה כשווא",r2:"הסבב השני",show:"תצוגת הרעיונות",win:"הכרזת המנצחים לפי הדירוג"})[nx]:"אין, זה השלב האחרון";
+const st=({lobby:"ממתין להפעלה",story:"הסיפור על המסך",twist:"השינוי בסיפור על המסך",show:"הרעיונות מוצגים",win:"המנצחים על המסך"})[G.ph]||(G.lock?"הסבב נסגר":G.pause?"מושהה":"הסבב פתוח");
+return `${pendv()}<div class="card"><p class="mut">קודי כניסה, אחד לכל מגמה</p><div class="cols">${TK.map(t=>`<div class="tile" style="--tc:${TCL[t]}"><b>${T[t][1]} ${T[t][0]}</b><div class="code">${TC[t]}</div></div>`).join("")}</div><p class="mut">קוד מפקדים: <b>${CC}</b></p><div class="ctl"><button onclick="go('screen')">מסך הקרנה</button><button onclick="go('join')">יציאה לדף הבית</button><button style="grid-column:1/-1" onclick="act('dm')" ${d(r)}>${G.demo?"מצב דמו: פועל, 23 משתתפים מדומים":"מצב דמו: כבוי, רק משתתפים אמיתיים"}</button></div></div>
+<div class="card"><h3>לוח בקרה</h3><div class="g3"><div><b>${np()}</b>מחוברים</div><div><b>${r?cn():0}</b>הגשות</div><div><b>${pad(i)}/06</b>שלב</div></div></div>
+<div class="card"><p class="mut">שלב נוכחי</p><h3>${ttl(G.ph)}</h3><p>${st}</p>${L?`<p class="mut">הצטרפו: ${TK.map(t=>T[t][1]+" "+roster(t).length).join(" · ")}</p>`:""}${G.ph==="show"||G.ph==="win"?`<p class="mut">${G.sub.length} תוצרים · ${(G.rc||0)} דירוגים</p>`:""}${clock()}${r?`<p class="mut">${TK.map(t=>T[t][0]+" "+G.sub.filter(x=>x.t===t&&x.r===G.ph).length).join(" · ")}</p>`:""}<p class="mut">מבט מקדים, רק לך: ${pre}</p>
+<div class="ctl"><button class="go" onclick="act('nx')" ${d(G.ph==="show")}>${L?"התחל":"השלב הבא"}</button><button onclick="act('ps')" ${d(!r)}>${G.pause?"המשך":"השהה"}</button><button onclick="act('cl')" ${d(!r||G.lock)}>סגור סבב</button><button onclick="act('tm')" ${d(!r||G.lock)}>הוסף 30 שניות</button><button onclick="act('tw')" ${d(!r)}>מבזק פתע</button><button onclick="act('lk')">${G.locked?"פתח כניסה":"נעל כניסה"}</button><button onclick="act('sn')" ${d(G.ph!=="show")}>הצג רעיון הבא</button><button onclick="act('sa')" ${d(G.ph!=="show")}>הצג הכול</button><button style="grid-column:1/-1" onclick="act('wn')" ${d(G.ph!=="win")}>חשוף מנצח הבא</button><button style="grid-column:1/-1" onclick="act('rs')">איפוס משחק</button></div></div>`+conn()+tcard()+``}
+function cmpCard(){if(!G.cmp)return"";return `<div class="card"><h3>מה רואים המשתתפים</h3><div class="pv">${play()}</div></div><div class="card"><h3>מה רואים בהקרנה</h3><div class="pv">${screen()}</div></div>`}
+function tcard(){return `<div class="card"><h3>בדיקה והדגמה</h3><div class="ctl"><button class="go" onclick="act('au')">${G.auto?"עצור הרצה אוטומטית":"הרצה אוטומטית עד הסוף"}</button><button onclick="act('rs')">התחלה מחדש</button></div></div>`}
+function conn(){const o=location.origin;return `<div class="card"><h3>חיבור מכשירים</h3><p>משתתפים: <b>${o}</b><br>מסך הקרנה: <b>${o}/#screen</b><br>שליטה מהטלפון: <b>${o}/#admin</b></p><p class="mut">מחובר לשרת בזמן אמת.</p></div>`}
+function alogin(){return `<div class="card"><h2>כניסת מנהל</h2><input id="pw" type="password" autocomplete="off" placeholder="סיסמה" onkeydown="if(event.key==='Enter')doAdmin()"><button class="pri" onclick="doAdmin()">כניסה</button><p class="err">${AE}</p><button class="lnk" onclick="go('join')">חזרה</button></div>`}
+async function doAdmin(){const r=await api("login",{pw:document.getElementById("pw").value});if(r.tok){TOK=r.tok;try{sessionStorage.setItem("tok",TOK)}catch(e){}AE="";AUTH=1;V="admin";connect()}else AE="הסיסמה שגויה.";draw()}
+function head(){const tx=G.ph==="lobby"?"ממתינים להתחלת השידור":ttl(G.ph);return `<div class="tick"><span class="live"><span class="dot"></span>שידור חי</span><span class="mqw"><span class="mq">${tx} · ${NEWS}</span></span><button class="snd" onclick="togSnd()">${SOUND?"🔊":"🔇"}</button></div>`}
+function beep(f,d,t,v){if(!SOUND)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t||"sine";o.frequency.value=f;g.gain.value=v||.08;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d)}catch(e){}}
+function togSnd(){SOUND=!SOUND;if(SOUND)beep(660,.12,"triangle");draw()}
+function sfx(){const ck=G.ph+"@"+G.age;if(ck!==LK){LK=ck;const ev=CIN[G.ph]&&CIN[G.ph].find(b=>b[0]===G.age);if(ev){if(ev[1].startsWith("JUMP")){beep(300,.25,"sawtooth",.1);setTimeout(()=>beep(220,.4,"sawtooth",.1),260)}else beep(520,.2,"sine",.05)}}
+const s=G.ph+"|"+G.fl,[p0,f0]=LS.split("|");
+if(s!==LS){
+if(G.ph!==p0&&G.ph!=="lobby"){if(G.ph==="show"){[392,523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.5,"triangle"),i*140))}else{beep(880,.15,"square");setTimeout(()=>beep(660,.3,"square"),170)}}
+if(String(G.fl)==="1"&&f0!=="1"){beep(300,.25,"sawtooth",.1);setTimeout(()=>beep(220,.4,"sawtooth",.1),260)}
+LS=s}
+if(isR()&&!G.lock&&G.t<=10&&G.t>0&&G.t!==LT){LT=G.t;beep(G.t<=3?1200:900,.08,"square")}}
+function route(){const h=location.hash.slice(1);V=h==="screen"?"screen":h==="admin"?(AUTH?"admin":"alogin"):"join";connect();draw()}
+function go(v){const h=v==="screen"?"screen":v==="join"?"":"admin";V=v;if(location.hash.slice(1)!==h)location.hash=h;connect();draw()}
+addEventListener("hashchange",route);
+function sync(){}
+function draw(){sync();{const h=head();if(h!==HDL){document.getElementById("hd").innerHTML=h;HDL=h}}document.getElementById("app").innerHTML=(V==="admin"?admin():V==="screen"?screen()+(AUTH?`<p style="text-align:center"><button class="lnk" onclick="go('admin')">חזרה ללוח הבקרה</button></p>`:""):V==="alogin"?alogin():CM?cmdv():G.joined?play():G.wait?waitv():joinUI());sfx()}
+function tickDraw(){if(V==="admin"||V==="screen"||(V==="join"&&(G.joined||CM||G.wait))){const a=document.activeElement;
+if(a&&a.tagName==="TEXTAREA"){const c=document.getElementById("clk");if(c){const h=G.t<=10&&!G.lock,rf=document.getElementById("rf"),rg=document.getElementById("rg");c.textContent=tm();c.className="clock"+(h?" hot":"");if(rf)rf.style.strokeDashoffset=(327*(1-Math.min(1,G.t/RL))).toFixed(1);if(rg)rg.className="ring"+(h?" hot":"")}sfx()}else draw()}}
+function applySnap(d){
+if(d.codes){TC=d.codes.TC||TC;if(d.codes.CC)CC=d.codes.CC;delete d.codes}
+if(d.me!==undefined){const m=d.me;G.joined=m&&m.st==="in"?1:0;G.wait=m&&m.st==="wait"?1:0;if(m){G.trk=m.trk;G.name=m.name;G.sent=m.sent||{};if(m.st==="no"){ERR="הבקשה נדחתה על ידי המנהל.";dropMe()}}delete d.me}
+if(d.my){MY=d.my;delete d.my}
+Object.assign(G,d);LINK=1;tickDraw()}
+function dropMe(){ME=null;CM=0;G.joined=0;G.wait=0;try{sessionStorage.removeItem("me")}catch(e){}if(ES){ES.close();ES=null}draw()}
+function connect(){if(ES){ES.close();ES=null}LINK=0;
+const q=V==="screen"?"role=s":(V==="admin"&&TOK)?"role=a&tok="+TOK:ME?"role="+(ME.role==="c"?"c":"p")+"&id="+ME.id:"";
+if(!q)return;const es=new EventSource("/api/stream?"+q);ES=es;
+es.onmessage=e=>applySnap(JSON.parse(e.data));
+es.onerror=()=>{LINK=0;if(es.readyState===2){if(V==="admin"){AUTH=0;TOK="";try{sessionStorage.removeItem("tok")}catch(e){}V="alogin";draw()}else if(ME)dropMe()}}}
+try{ME=JSON.parse(sessionStorage.getItem("me")||"null");TOK=sessionStorage.getItem("tok")||"";if(TOK)AUTH=1;if(ME&&ME.role==="c"){CM=1;CMN="מפקד"}}catch(e){}
+route();
+</script></body></html>
