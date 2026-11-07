@@ -62,10 +62,10 @@ function tick(){
 setInterval(tick,1000);
 
 function snap(c){
- const g={ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
+ const g={serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
  if(S.ph==="win")g.W=winners();
- const all=c.role==="a"||c.role==="c"||c.role==="v",subs=all||/^show[2-5]?$/.test(S.ph)||S.ph==="win";
- if(c.sv!==S.sv||c.sh!==subs){g.sub=subs?(c.role==="a"||c.role==="c"||S.ph==="win"?S.sub:S.sub.filter(x=>x.r==="r"+(S.ph==="show"?"1":S.ph.slice(4)))):[];c.sv=S.sv;c.sh=subs}
+ const all=c.role==="a"||c.role==="c"||c.role==="v"||c.role==="s",subs=all;
+ if(c.sv!==S.sv||c.sh!==(c.role==="s"?S.ph:subs)){g.sub=subs?(c.role==="s"?(/^show[2-5]?$/.test(S.ph)?S.sub.filter(x=>x.r==="r"+(S.ph==="show"?"1":S.ph.slice(4))):[]):S.sub):[];c.sv=S.sv;c.sh=c.role==="s"?S.ph:subs}
  if(c.role==="p"){const p=S.pl.find(x=>x.id===c.id);g.me=p?{st:p.st,trk:p.t,name:p.n,sent:p.sent,kickUntil:p.kickUntil||0}:null}
  if(c.role==="c")g.my=S.my[c.id]||{};
  if(c.role==="s"||c.role==="v")g.codes={TC:bank.TC};
