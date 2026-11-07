@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NEWS404 | 2026.11.07-audit.2</title>
+<title>NEWS404 | 2026.11.07-v7.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f4f0e8;--bg2:#e7e0d3;--panel:#fff;--panel2:#f8f4ec;--ink:#1b2230;--mut:#667085;--line:#ddd5c7;--red:#e5384a;--teal:#17877f;--amber:#c98400;--tc:#e5384a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -110,71 +110,95 @@ body:has(.testgrid) main{max-width:1600px}
 .reviewby{font-size:19px}
 .chat .chatbody{max-height:180px}.chatbar{align-items:center}.chatbar span{font-weight:400}
 /* Screen-only review must stay legible through one-second live updates. */
-body:has(.reviewgrid),body:has(.scr .cin.briefing){background:#08111e;color:#eaf2ff}
+body:has(.reviewgrid),body:has(.review-stage),body:has(.scr .cin.briefing){background:#08111e;color:#eaf2ff}
 body:has(.reviewgrid)::before{opacity:.05}
 .reviewentry{animation:none}
 .reviewentry p b{color:#bed0e3}
 .reviewby small{color:#cad6e5}
+
+/* Sequential result cards: only the projection uses this layout. */
+.review-stage{min-height:390px;display:flex;align-items:center;justify-content:center;perspective:900px;padding:18px 0 12px}
+.spotlight-card{width:min(100%,920px);border:1px solid color-mix(in srgb,var(--tc) 58%,#ffffff);border-top:8px solid var(--tc);border-radius:24px;background:linear-gradient(145deg,#192640,#101a2c);color:#f1f6ff;box-shadow:0 24px 70px #0008;overflow:hidden;min-height:300px}
+.spotlight-card{max-height:70vh;display:flex;flex-direction:column}.spotlight-answer{overflow-y:auto;min-height:0}.spotlight-card.card-enter{animation:reviewPop .65s cubic-bezier(.17,.85,.25,1.13)}
+@keyframes reviewPop{from{transform:translateY(50px) rotateX(8deg) scale(.87);opacity:.05}to{transform:translateY(0) rotateX(0) scale(1);opacity:1}}
+.spotlight-top{padding:12px 28px;display:flex;justify-content:space-between;background:#ffffff0a;color:#c8d4e4;font-weight:800}.spotlight-card h2{font-size:clamp(27px,3.2vw,43px);margin:18px 28px 5px}
+.spotlight-answer{padding:10px 28px 28px;display:grid;gap:12px}.spotlight-field{border-right:4px solid var(--tc);background:#ffffff0a;padding:12px 16px;border-radius:10px;min-width:0}.spotlight-field>b{font-size:16px;color:#b8cce7}.spotlight-field p{font-size:clamp(18px,2.2vw,29px);line-height:1.45;white-space:pre-wrap;margin:8px 0 0;overflow-wrap:anywhere}
+.spotlight-empty{text-align:center}.review-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:6px}.review-dots span{width:9px;height:9px;border-radius:50%;background:#4d5d72}.review-dots span.active{background:#ff5362;transform:scale(1.3)}
+.commander-guide{border-right:4px solid #c1a2fb}.guide-grid{display:grid;grid-template-columns:1fr;gap:9px}.guide-grid>div{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}.guide-grid p{margin:5px 0}.guide-grid small{color:var(--mut)}
+.rated-field{padding:12px;border:1px solid var(--line);border-radius:12px;margin:10px 0}.rated-field b{color:var(--teal)}.rated-field p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}.stars{display:flex;gap:4px;flex-wrap:wrap}
+.waiting-update{border:2px solid var(--amber);border-radius:16px;padding:18px;margin:18px 0}.waiting-update strong{font-size:26px;color:var(--red)}
+.alert-backdrop{position:fixed;inset:0;background:#030711e8;z-index:1000;display:flex;justify-content:center;align-items:center;padding:18px;box-sizing:border-box}
+.alert-dialog{width:min(600px,100%);background:#142137;color:#f1f5fc;border:2px solid #ff5968;border-radius:22px;padding:clamp(22px,4vw,40px);box-shadow:0 25px 100px #000a}
+.alert-dialog h2{font-size:clamp(27px,5vw,42px);color:#fff;margin-top:8px}.alert-dialog p{font-size:clamp(18px,2.4vw,24px);line-height:1.45}
+.alert-kicker{color:#ff7d89;font-weight:800}.alert-dialog .pri{margin-top:20px}.alert-dialog .pri:disabled{opacity:.5}
+.thanks{color:#f4f8ff;background:radial-gradient(ellipse at 50% 10%,#283c66,#070c18 80%);border:1px solid #394e74;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:360px;padding:36px 15px}
+.thanks h1{font-size:clamp(43px,7vw,90px);margin:24px 0}.thanks p{color:#c6d4e9;font-size:clamp(20px,2.3vw,30px)}.thanks>span{letter-spacing:.35em;color:#95adc9}.thanks-rule{width:150px;height:3px;background:#ff586a;border-radius:8px;margin:15px}
+@media(max-width:520px){.review-stage{min-height:300px}.spotlight-top{padding:12px}.spotlight-card h2{margin:16px}.spotlight-answer{padding:12px}.spotlight-field p{font-size:19px}}
 </style></head><body><div id="hd"></div><main id="app"></main>
 <script>
 let TC={},CC="";const RL=180;
-const T={j:["עיתונאות","📰"],s:["דוברות","🎙️"],n:["רשתות","📱"]},TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","win"];
+const T={j:["עיתונאות","📰"],s:["דוברות","🎙️"],n:["רשתות","📱"]},TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","twist6","r6","show6","win","thanks"];
+const isShow=p=>/^show[2-6]?$/.test(p),showRound=p=>"r"+(p==="show"?"1":p.slice(4));
 const TCL={j:"#3db8ff",s:"#ffb703",n:"#ff5d8f"};
-const NEWS="NEWS404", BUILD="2026.11.07-audit.2";
+const NEWS="NEWS404", BUILD="2026.11.07-v7.0";
 const FLASH={
-r1:"חמ״ל | 07:12: גורם איראני טוען שהתקיפות לא גרמו לנזק משמעותי. צה״ל טרם פרסם הערכת נזק או תוצאות תקיפה, ולכן שתי הטענות אינן נתון מאומת.",
-r2:"חמ״ל | 18:28: המשפחה חולצה בחיים, אך נמסר שהאב פונה לבית החולים לבדיקה נוספת. אין אישור לפרסם אבחנה רפואית או פרטים מזהים; התיעוד הקיים מראה רק את פעולות המחלצים.",
-r3:"חמ״ל | 10:22: רשת תקשורת זרה פרסמה את הסרטון תוך הסתייגות. התברר שהפריים הראשון נלקח מאירוע בשנת 2021, אך שני פריימים מאוחרים יותר נוצרו באמצעים דיגיטליים. יש להבחין בין מקור ישן לעריכת AI.",
-r4:"חמ״ל | 04:08: פיקוד העורף מעדכן: ביישוב נחלון יש להישאר סמוך למרחב מוגן עד 05:00, גם לאחר שההתרעות ביישובים האחרים הסתיימו. יש להיזהר מהודעה גורפת על חזרה לשגרה.",
-r5:"חמ״ל | 12:10: לתחקיר החודש נוסף תיעוד מאומת מחילוץ פלח״ץ ביום 6. בתיעוד נשמעים אנשי החילוץ לפני הכניסה למבנה, אך פני המחולצים אינם נראים."
+r1:"חמ״ל | 07:12: דובר משרד ההגנה האיראני טוען שהתקיפות לא פגעו ביעדיהן. לא פורסמה הערכת נזק מאומתת; אין להציג את הטענה כהוכחה להצלחת המבצע או לכישלונו.",
+r2:"חמ״ל | 18:28: המשפחה חולצה בחיים, אך אחד המחולצים הועבר לבדיקות נוספות בבית החולים. אין מידע מאושר על אבחנה רפואית.",
+r3:"חמ״ל | 10:22: צוות האימות איתר את צילום המטוס מתוך אירוע שהתרחש בישראל בשנת 2021. בבדיקה התברר שהרקע בתמונה שהופצה הוחלף ברקע שנוצר באמצעות AI.",
+r4:"חמ״ל | עדכון: לאחר בדיקה התברר שהעצם שחצה את הגבול היה בלון. החשד הראשוני לכלי טיס עוין הוסר.",
+r5:"חמ״ל | 16:38: צוות החילוץ הודיע כי אותר אדם נוסף בקומה הרביעית, אך עדיין לא פורסמו פרטים על זהותו. כעת אפשר לפתח גם את כיוון הסיפור הזה.",
+r6:"חמ״ל | 18:15: שר הביטחון מאשר כי הסכם הפסקת האש נכנס לתוקף. פיקוד העורף מבהיר שהנחיות ההתגוננות הקיימות נשארות בתוקף עד לפרסום עדכון רשמי."
 };
 function flash(p){return `<p class="flash">${esc(FLASH[p]||"")}</p>`}
 
 const ST={
-story:{t:"יום 1 | 06:30",d:"בשעה 06:30 מודיע דובר צה״ל כי חיל האוויר החל במבצע באיראן נגד מטרות צבאיות. לפני ההודעה התקבלו התרעות במספר אזורים בישראל. תוצאות התקיפות עדיין בבדיקה; פיקוד העורף לא פרסם שינוי גורף בהנחיות. בחמ״ל מתקבלות פניות ראשונות."},
-twist:{t:"יום 6 | 17:40",d:"באזור המרכז נפגע בניין מגורים משברי יירוט. לוחמי פלח״ץ מוזעקים לזירה, נכנסים לבניין ומחלצים שלושה בני משפחה שהיו לכודים בחדר המדרגות. החילוץ מסתיים בשעה 18:16. המשפחה מועברת לבדיקה רפואית, ושמות המעורבים לא אושרו לפרסום."},
-twist3:{t:"יום 12 | 09:10",d:"בערוצי טלגרם מופץ סרטון בן 19 שניות שמציג לכאורה מטוס ישראלי בוער מעל איראן. הסרטון צובר מאות אלפי צפיות. בדיקת מקור מגלה שהבסיס שלו הוא תיעוד משנת 2021, וחלק מהפריימים עברו שינוי באמצעות AI. אין אישור לטענה שמטוס ישראלי הופל באירוע המצולם."},
-twist4:{t:"יום 20 | 01:15",d:"רצף התרעות מעיר תושבים בכמה יישובים. צוותי מערך ההגנה האווירית מבצעים יירוטים במשך הלילה. בשעה 03:20 מסתיים רצף ההתרעות, ובבוקר מאתרים שברי יירוט בשטח פתוח. מספר היירוטים והמיקום של מערכות ההגנה אינם מאושרים לפרסום."},
-twist5:{t:"יום 30 | 12:00",d:"חודש חלף מאז פתיחת המבצע, והוא עדיין נמשך. לאורך החודש פעלו צוותי חיל האוויר, פלח״ץ, מערך ההגנה האווירית וצוותי הרפואה. חומרי צילום ועדויות מהשטח מועברים לסיכום החודש, בזמן שהפעילות הצבאית עדיין נמשכת."}};
+story:{t:"יום 1 | 06:30",d:"בשעה 06:30 מודיע דובר צה״ל על תחילת מבצע באיראן. חיל האוויר תקף מטרות צבאיות, ובישראל התקבלו התרעות. תוצאות התקיפות עדיין בבדיקה, והנחיות פיקוד העורף לא שונו באופן גורף."},
+twist:{t:"יום 6 | 17:40",d:"שברי יירוט פוגעים בבניין מגורים במרכז הארץ. לוחמי פלח״ץ נכנסים למבנה בשעה 17:52 ומחלצים שלושה בני משפחה מחדר מדרגות בשעה 18:16. המחולצים עוברים לבדיקה רפואית."},
+twist3:{t:"יום 12 | 09:10",d:"תמונה של מטוס צבאי שהתרסק לכאורה בישראל מופצת עם טענה שמדובר באירוע מהמבצע הנוכחי. בדיקה מגלה שצילום המטוס נלקח מתקרית משנת 2021 בישראל, והרקע בתמונה הוחלף ברקע שנוצר באמצעות AI. אין לתמונה קשר לנפילת מטוס במבצע הנוכחי."},
+twist4:{t:"יום 20 | 01:15",d:"ב־01:15 מתקבל דיווח על חדירת כלי טיס עוין לשטח ישראל סמוך לגבול הצפון. התרעה מופעלת בכמה יישובים, וכוחות הביטחון בודקים את העצם. זהותו טרם אומתה, והתושבים ממתינים להנחיות."},
+twist5:{t:"יום 30 | 16:20",d:"צוות פלח״ץ מוזעק לבניין שנפגע באזור המרכז. בקומה הרביעית נשמעים קולות מתוך דירה שדלתה חסומה, אך לא ידוע מי נמצא בפנים. הצוות מתחיל לפנות את המעבר. התיעוד שהגיע לחמ״ל נעצר בדיוק ברגע הזה."},
+twist6:{t:"יום 31 | 17:40",d:"לאחר חודש של לחימה, נציגי ישראל ואיראן מאשרים שהושג הסכם הפסקת אש. ההסכם נכנס לתוקף בשעה 18:00, אך פיקוד העורף מדגיש שהנחיות ההתגוננות לא משתנות באופן אוטומטי. בצה״ל מסכמים את האירועים המרכזיים של החודש."}};
 const CIN={
-story:[[0,"יום 1 | 06:30"],[5,"דובר צה״ל מודיע: המבצע באיראן החל."],[12,"חיל האוויר פועל נגד מטרות צבאיות; תוצאות התקיפות בבדיקה."],[22,"התרעות מתקבלות במספר אזורים בישראל."],[31,"פרטי היעדים, הנזק והמשך הפעילות עדיין אינם מאושרים לפרסום."]],
-twist:[[0,"יום 6 | 17:40"],[5,"שברי יירוט פוגעים בבניין מגורים במרכז הארץ."],[12,"17:52 | לוחמי פלח״ץ נכנסים למבנה."],[21,"18:16 | שלושה בני משפחה מחולצים מחדר המדרגות."],[30,"המשפחה מועברת לבדיקה רפואית; פרטי זהות ומצב רפואי לא אושרו."]],
-twist3:[[0,"יום 12 | 09:10"],[5,"סרטון של מטוס בוער מופץ כצילום חדש מאיראן."],[12,"הסרטון צובר מאות אלפי צפיות תוך זמן קצר."],[21,"10:05 | צוות אימות מאתר את תיעוד המקור משנת 2021."],[30,"חלק מהפריימים עובדו באמצעות AI. הטענה בכיתוב לא אומתה."]],
-twist4:[[0,"יום 20 | 01:15"],[5,"התרעות מופעלות בכמה יישובים."],[12,"צוותי ההגנה האווירית מבצעים יירוטים במהלך הלילה."],[21,"03:20 | רצף ההתרעות מסתיים."],[30,"שברי יירוט מתגלים בשטח פתוח; מיקומי הסוללות חסויים."]],
-twist5:[[0,"יום 30 | 12:00"],[5,"חודש חלף מתחילת המבצע."],[12,"חיל האוויר, פלח״ץ, מערך ההגנה האווירית והרפואה ממשיכים לפעול."],[21,"צוותי תקשורת אוספים עדויות וחומרי צילום לסיכום החודש."],[30,"הפעילות עדיין נמשכת; תמונת המצב של החודש עוברת אימות לקראת פרסום."]]};
+story:[[0,"יום 1 | 06:30"],[5,"צה״ל מודיע על תחילת מבצע באיראן."],[12,"חיל האוויר תקף מטרות צבאיות; תוצאות התקיפות עדיין בבדיקה."],[22,"בישראל מתקבלות התרעות בכמה אזורים."],[31,"לא הוכרז שינוי גורף בהנחיות פיקוד העורף."]],
+twist:[[0,"יום 6 | 17:40"],[5,"שברי יירוט פוגעים בבניין מגורים במרכז הארץ."],[12,"17:52 | לוחמי פלח״ץ נכנסים למבנה שנפגע."],[21,"18:16 | שלושה בני משפחה מחולצים מחדר המדרגות."],[30,"המחולצים מועברים לבדיקה רפואית; מצבם המדויק טרם פורסם."]],
+twist3:[[0,"יום 12 | 09:10"],[5,"ברשת מופצת תמונה של מטוס שהתרסק לכאורה בישראל בזמן המבצע."],[12,"התמונה משותפת באלפי חשבונות בלי מקור מוסמך."],[21,"10:05 | צוות אימות מזהה צילום מטוס מאירוע בישראל בשנת 2021."],[30,"הרקע בתמונה הוחלף ברקע שנוצר באמצעות AI; אין זה תיעוד חדש."]],
+twist4:[[0,"יום 20 | 01:15"],[5,"התרעה על חדירת כלי טיס עוין מופעלת סמוך לגבול הצפון."],[12,"כוחות הביטחון בודקים עצם שחצה את קו הגבול."],[21,"התושבים ממתינים לפרטים נוספים; טרם נקבע מהו העצם."],[30,"הבדיקה עדיין נמשכת והפרטים הראשוניים אינם סופיים."]],
+twist5:[[0,"יום 30 | 16:20"],[5,"צוות פלח״ץ מגיע לבניין שנפגע באזור המרכז."],[12,"בקומה הרביעית נשמעים קולות מתוך דירה שדלתה חסומה."],[21,"המחלצים מתחילים לפנות את המעבר לדירה."],[30,"הצילום נעצר. לא ידוע עדיין מי נמצא בדירה ומה קרה בהמשך."]],
+twist6:[[0,"יום 31 | 17:40"],[5,"נציגי ישראל ואיראן מאשרים: הושג הסכם הפסקת אש."],[12,"18:00 | הפסקת האש נכנסת לתוקף."],[21,"הנחיות פיקוד העורף נשארות בתוקף עד הודעה חדשה."],[30,"כעת מתפרסם ציר האירועים של חודש המבצע."]]};
 const R={
-r1:{t:"יום 1 | פתיחת המבצע",j:{q:"כתבו גג ובאנר על פתיחת המבצע, אך אל תקבעו תוצאות תקיפה שטרם אושרו.",f:["גג","באנר"]},s:{q:"יואב לימור פנה לקבלת פרטים על פתיחת המבצע. השיבו לו בתגובה אחת ברורה המתייחסת לשאלותיו ולמידע שמותר לפרסם.",sms:false},n:{q:"בחרו קונספט לסיפור מצולם ביום פתיחת המבצע. מי במרכזו ומה יראה הצופה?",f:["הקונספט","מה המסר?"]}},
-r2:{t:"יום 6 | חילוץ פלח״ץ",j:{q:"כתבו גג ובאנר לידיעה על חילוץ המשפחה בידי לוחמי פלח״ץ. אל תציגו פרטים רפואיים שלא אושרו.",f:["גג","באנר"]},s:{q:"רועי שרון מבקש פרטים על חילוץ המשפחה. כתבו לו תגובה אחת שמבהירה מה ידוע ומה לא ניתן לפרסם.",sms:false},n:{q:"בחרו קונספט לסיפור מצולם על חילוץ פלח״ץ והאנשים שלקחו בו חלק.",f:["הקונספט","מה המסר?"]}},
-r3:{t:"יום 12 | הסרטון המטעה",j:{q:"כתבו גג ובאנר שמסבירים את ממצאי בדיקת הסרטון הישן שעבר עריכת AI.",f:["גג","באנר"]},s:{q:"הלל ביטון רוזן מבקש תשובה על הסרטון. השיבו לו בתגובה אחת המתבססת על ממצאי הבדיקה, בלי להרחיב לטענות שלא נבדקו.",sms:false},n:{q:"בחרו קונספט מצולם שמציג את סיפור הסרטון המטעה ואת הבדיקה שנעשתה לו.",f:["הקונספט","מה המסר?"]}},
-r4:{t:"יום 20 | לילה של יירוטים",j:{q:"כתבו גג ובאנר על לילה של פעילות מערך ההגנה האווירית והשינוי בהנחיות לתושבים.",f:["גג","באנר"]},s:{q:"פיקוד העורף העביר הנחיה ממוקדת לתושבים. נסחו SMS מבצעי אחד, קצר וברור, שמציין למי הוא מיועד ומה נדרש מהם כעת.",sms:true},n:{q:"בחרו קונספט מצולם על לילה של התרעות והאנשים שפעלו במהלכו.",f:["הקונספט","מה המסר?"]}},
-r5:{t:"יום 30 | חודש למבצע",j:{q:"כתבו גג ובאנר לידיעה מסכמת על החודש. אפשר להוסיף פרטים שהמצאתם תוך שמירה על רצף הסיפור.",f:["גג","באנר"]},s:{q:"יואב לימור מבקש תמונת מצב לאחר חודש. השיבו לו בתגובה אחת שעושה סדר בין האירועים הידועים לבין פרטים שהוספתם.",sms:false},n:{q:"בחרו קונספט מקורי לסיפור מצולם על חודש המבצע. אפשר להמציא דמויות והתרחשויות.",f:["הקונספט","מה המסר?"]}}};
-// פרטי תרחיש מוסכמים: זהו תרגיל בדיוני, ולא דיווח על אירוע אמיתי.
+r1:{t:"יום 1 | פתיחת המבצע",j:{q:"כתבו גג ובאנר לידיעה על פתיחת המבצע. אין לפרסם תוצאות תקיפה שלא אושרו.",f:["גג","באנר"]},s:{q:"יואב לימור מבקש פרטים מאומתים על פתיחת המבצע. נסחו תגובה אחת לפנייתו.",sms:false},n:{q:"הציעו קונספט לסרטון שניתן להפיק על היום הראשון של המבצע. הגדירו מה יראו בו ומה המסר המרכזי.",f:["הקונספט","מה המסר?"]}},
+r2:{t:"יום 6 | חילוץ פלח״ץ",j:{q:"כתבו גג ובאנר לידיעה על חילוץ המשפחה בידי לוחמי פלח״ץ.",f:["גג","באנר"]},s:{q:"רועי שרון מבקש את פרטי החילוץ המאושרים. נסחו תגובה אחת לפנייתו.",sms:false},n:{q:"הציעו קונספט מצולם על צוות פלח״ץ והפעולה שביצע. הגדירו מה המסר.",f:["הקונספט","מה המסר?"]}},
+r3:{t:"יום 12 | התמונה המטעה",j:{q:"כתבו גג ובאנר על ממצאי בדיקת התמונה שהופצה. הבהירו מה אמיתי ומה נערך ב־AI.",f:["גג","באנר"]},s:{q:"הלל ביטון רוזן פונה בנושא התמונה שהופצה. נסחו תגובה אחת המבוססת על ממצאי הבדיקה.",sms:false},n:{q:"הציעו קונספט מצולם שמבהיר לציבור כיצד נחשפה התמונה המטעה. מה המסר שלכם?",f:["הקונספט","מה המסר?"]}},
+r4:{t:"יום 20 | חשד לחדירת כלי טיס",j:{q:"כתבו גג ובאנר על הדיווח הראשוני. היו מוכנים לשינוי אם יגיע מידע חדש.",f:["גג","באנר"]},s:{q:"נסחו SMS מבצעי קצר לתושבי יישובי הגבול על ההנחיות בעקבות ההתראה, בהתאם למידע שאושר עד כה.",sms:true},n:{q:"הציעו קונספט לסרטון חדשותי על האירוע בגבול. בחרו מסר שמתאים למידע המאומת.",f:["הקונספט","מה המסר?"]}},
+r5:{t:"יום 30 | התיעוד שנקטע",j:{q:"המציאו את המשך האירוע וכתבו לו גג ובאנר. השתמשו בנקודת הפתיחה שנמסרה.",f:["גג","באנר"]},s:{q:"יואב לימור מבקש לדעת מה קרה בתוך הדירה. המציאו המשך אפשרי ונסחו תגובה אחת לפנייתו על בסיס הסיפור שיצרתם.",sms:false},n:{q:"המציאו את המשך האירוע ופתחו ממנו קונספט לסרטון. מה המסר שתרצו להעביר?",f:["הקונספט","מה המסר?"]}},
+r6:{t:"יום 31 | הפסקת האש",j:{q:"כתבו גג ובאנר על הסכם הפסקת האש וסיום החודש, על בסיס ציר האירועים.",f:["גג","באנר"]},s:{q:"הסכם הפסקת האש נכנס לתוקף. שלחו SMS מבצעי לתושבים שמבהיר מה השתנה ומה עדיין מחייב ציות להנחיות.",sms:true},n:{q:"בחרו קונספט לסרטון סיום המבצע המבוסס על האירועים המרכזיים בחודש. מה המסר?",f:["הקונספט","מה המסר?"]}}};
 const FACTS={
-r1:["יום 1, 06:30: הוכרזה תחילת מבצע צבאי באיראן .","נמסר שהמבצע כולל פעילות אווירית נגד יעדים צבאיים; לא אושרו שמות היעדים או תוצאות התקיפה.","עדכון רשמי נוסף יימסר לאחר אימות הממצאים; אין אישור לפרסם מספר מטוסים, יעדים מדויקים או תוצאות תקיפה.","אין שינוי גורף בהנחיות פיקוד העורף; יש לפעול לפי התרעות פרטניות ולהסתמך על הערוצים הרשמיים בלבד."],
-r2:["יום 6, 17:40: לאחר נפילת שברי יירוט נפגע בניין מגורים באזור המרכז .","צוות חילוץ הגיע לזירה ב־17:52 וחילץ שלושה בני משפחה מחדר מדרגות ב־18:16.","שלושת המחולצים הועברו לבדיקה רפואית; אין אישור לפרסם אבחנות, פציעות או פרטים מזהים.","יש אישור לפרסם את עצם החילוץ ואת ציר הזמנים; אין אישור לפרסם את שמות המשפחה, הכתובת או תיעוד פנים."],
-r3:["יום 12, 09:10: סרטון בן 19 שניות מופץ ברשת כצילום של מטוס ישראלי בוער באיראן.","בדיקת צוות האימות בשעה 10:05 קבעה שהסרטון אינו תיעוד מהמבצע: זהו סרטון ישן מ־2021 שהועבר עריכה דיגיטלית, ובחלק מהגרסאות נוספו רכיבים שנוצרו ב־AI.","אין בידי הצוות מידע מאושר על נפילת מטוס ישראלי במסגרת האירוע המתואר בסרטון.","אפשר לפרסם את מסקנת בדיקת הסרטון, אך לא להסיק ממנה טענות על כלל פעילות חיל האוויר."],
-r4:["יום 20, 01:15 עד 03:20: התקבלו התרעות במספר יישובים .","דובר צה״ל אישר שכוחות ההגנה האווירית ביצעו יירוטים במהלך הלילה.","רסיסי יירוט נמצאו בשטח פתוח; אין כרגע הודעה מאומתת על נפגעים באותו אירוע.","פיקוד העורף הנחה את תושבי היישוב נחלון להישאר סמוך למרחב מוגן עד 05:00. בשאר היישובים יש לפעול לפי ההנחיות הקיימות. מספר היירוטים ומיקומי הסוללות אינם מאושרים לפרסום."],
-r5:["יום 30: חלף חודש מתחילת המבצע; הפעילות הצבאית והערכת המצב עדיין נמשכות .","לאורך החודש פורסמו הודעת פתיחה, חילוץ של שלושה בני משפחה, בדיקת סרטון שגוי והודעה על פעילות הגנה אווירית.","לפרויקט הסיכום אושרו ראיונות עם מחלץ, חיילת הגנה אווירית ואיש צוות רפואי ללא פרטים אישיים מזהים.","בשלב זה מותר להמציא אירועים, דמויות, ציטוטים ונתונים  בלבד. יש לסמן אותם כבדיוניים ולהקפיד על עקביות. אין להציג אותם כמידע אמיתי או כהודעת צה״ל.","לא אושר לפרסם מאזן תקיפות או נפגעים אמיתי, ואין להציג את המבצע כמבצע שהסתיים.",""]};
+r1:["06:30: צה״ל מודיע על תחילת מבצע באיראן.","חיל האוויר ביצע תקיפות נגד מטרות צבאיות, אך פרטי היעדים ותוצאותיהן טרם פורסמו.","נרשמו התרעות בכמה אזורים בישראל.","לא פורסם שינוי גורף בהנחיות פיקוד העורף."],
+r2:["17:40: שברי יירוט פוגעים בבניין מגורים במרכז הארץ.","17:52: לוחמי פלח״ץ נכנסים למבנה; 18:16: שלושה בני משפחה מחולצים מחדר המדרגות.","שלושת המחולצים הועברו לבדיקה רפואית; אין אישור לפרסם פרטים רפואיים או מזהים.","מותר לפרסם את ציר הזמנים של החילוץ, לא את זהות המשפחה או תצלומי פניה."],
+r3:["09:10: ברשת מופצת תמונה של מטוס שהתרסק לכאורה בישראל בימי המבצע.","צילום המטוס שבתמונה לקוח מתקרית שהתרחשה בישראל בשנת 2021.","הרקע בתמונה שהופצה נוצר באמצעות AI והושתל מאחורי צילום המטוס.","אין קשר בין התמונה שהופצה לבין נפילת מטוס במבצע הנוכחי.","זהו תצלום ערוך, לא סרטון. אין להסיק ממנו מסקנות על אירועים אחרים שלא נבדקו."],
+r4:["01:15: מופעלת התרעה על חדירת כלי טיס עוין סמוך לגבול הצפון.","כוחות הביטחון מזהים עצם שחצה את הגבול, אך בשלב זה לא אומת מהו.","לתושבים נמסרה הנחיה להישאר במרחב מוגן עד הודעה אחרת.","אין מידע מאושר על תקיפה, נזק או נפגעים. צפוי עדכון נוסף."],
+r5:["16:20: לוחמי פלח״ץ נקראו לבניין שנפגע באזור המרכז.","בקומה הרביעית נשמעים קולות מאחורי דלת חסומה; הצוות מתחיל לפנות את המעבר.","הצילום שהתקבל נעצר לפני הכניסה לדירה. לא ידוע מי נמצא בה או מה התרחש בהמשך.","מהנקודה הזאת אתם רשאים להמציא את ההמשך: דמויות, אירועים, ציטוטים ותוצאה. אין צורך לסכם את החודש."],
+r6:["יום 1: חיל האוויר פותח במבצע באיראן והתרעות מתקבלות בישראל.","יום 6: לוחמי פלח״ץ מחלצים שלושה בני משפחה מבניין שנפגע.","יום 12: מתגלה שתמונת מטוס שהופצה ערוכה, עם צילום מ־2021 ורקע AI.","יום 20: חשד לחדירת כלי טיס בצפון מתברר כאירוע של בלון שחצה את הגבול.","יום 30: צוות פלח״ץ מגיע לדירה חסומה בבניין שנפגע; המשתתפים השלימו את ההתרחשות.","יום 31, 18:00: נכנס לתוקף הסכם הפסקת אש בין המדינות. הנחיות פיקוד העורף נותרות בתוקף עד עדכון רשמי."]};
 const REPORTER={
-r1:{name:"יואב לימור",org:"פניית כתב",msg:"בוקר טוב. ראיתי את ההודעה על פתיחת המבצע. מה בדיוק צה״ל מאשר שקרה, האם יש תוצאות ידועות מהתקיפות והאם ההתרעות משנות את ההנחיות לתושבים? אני צריך תגובה מסודרת לפרסום."},
-r2:{name:"רועי שרון",org:"פניית כתב",msg:"אני מקבל דיווחים על חילוץ שלושה בני משפחה בידי פלח״ץ. מה לוח הזמנים המאושר? האם אפשר לומר מה מצבם והאם מותר לפרסם את זהותם או תיעוד שלהם? אשמח לתגובה מלאה."},
-r3:{name:"הלל ביטון רוזן",org:"פניית כתב",msg:"מסתובב סרטון שלכאורה מציג מטוס ישראלי שהופל באיראן. יש לכם ממצא בדוק שמפריך אותו? על מה נשענת הבדיקה, והאם זה אומר שאפשר לשלול הפלת מטוסים בכלל? צריך תגובה רשמית."},
-r5:{name:"יואב לימור",org:"פניית כתב",msg:"חודש למבצע. מה סיכום האירועים שאתם מאשרים? האם המבצע הסתיים, אילו יחידות אפשר לציין ומה הנתונים שאתם עומדים מאחוריהם? אני מבקש תגובה אחת לפרסום."}};
+r1:{name:"יואב לימור",org:"פניית כתב",msg:"בוקר טוב. מה בדיוק צה״ל מאשר לגבי פתיחת המבצע, אילו תוצאות ידועות מהתקיפות והאם ההתרעות משנות את ההנחיות לתושבים? צריך תגובה אחת לפרסום."},
+r2:{name:"רועי שרון",org:"פניית כתב",msg:"אני מקבל דיווחים על חילוץ שלושה בני משפחה בידי פלח״ץ. מה לוח הזמנים המאושר? האם מותר לפרסם את מצבם ואת זהותם? אשמח לתגובה מסודרת."},
+r3:{name:"הלל ביטון רוזן",org:"פניית כתב",msg:"מופצת תמונה שטוענים כי היא מראה מטוס צבאי שנפל בישראל בזמן המבצע. מה מקור צילום המטוס, מה בדיוק נוצר באמצעות AI והאם יש קשר למבצע הנוכחי? אני צריך תגובה לכתבה."},
+r5:{name:"יואב לימור",org:"פניית כתב",msg:"קיבלנו תיעוד חלקי של חילוץ פלח״ץ ביום 30. מה קרה בקומה הרביעית, מי נמצא בדירה ואיך הסתיים האירוע? אנא מסרו תגובה אחת מסודרת."}};
 function reporterChat(p){const sms=R[p].s.sms;
 if(sms)return `<div class="card chat"><div class="chatbar"><strong>📱 SMS מבצעי לתושבים</strong></div><div style="padding:16px"><label class="mut">נוסח ההודעה</label><textarea id="sms" rows="4" maxlength="320" placeholder="נסחו הודעה קצרה ומדויקת לתושבים" oninput="DF.sms=this.value">${esc(DF.sms||"")}</textarea></div></div>`;
 const x=REPORTER[p];return `<div class="card chat"><div class="chatbar"><strong>💬 ${esc(x.name)}</strong><span>${x.org}</span></div><div class="chatbody"><div class="bubble incoming">${esc(x.msg)}</div></div><div style="padding:16px"><label class="mut">תגובה לכתב</label><textarea id="spokes" rows="7" maxlength="2600" placeholder="נסחו תשובה אחת לפניית הכתב" oninput="DF.statement=this.value">${esc(DF.statement||"")}</textarea></div></div>`}
-function factsCard(p){const facts=FACTS[p];if(!facts)return"";return `<section class="card facts" aria-label="הנתונים שנמסרו"><div class="fact-head"><span class="chip">📋 מידע זמין לכולם</span><strong>הנתונים שנמסרו · ${"שלב "+p.slice(1)}</strong></div><p class="mut">הסתמכו על הנתונים שנמסרו בעת ניסוח התוצר.</p><ul>${facts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`}
+function factsCard(p){const facts=FACTS[p];if(!facts)return"";const full=[...facts];if(p==="r4"&&G.event4)full.push("01:17: בתום בדיקה התברר שהעצם שחצה את הגבול היה בלון. החשד לחדירת כלי טיס עוין הוסר; ממשיכים לפעול לפי הנחיות פיקוד העורף שהתקבלו.");return `<section class="card facts" aria-label="הנתונים שנמסרו"><div class="fact-head"><span class="chip">📋 מידע זמין לכולם</span><strong>הנתונים שנמסרו · שלב ${p.slice(1)}</strong></div><ul>${full.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`}
 const FD={};
 
 
-let V="join",ERR="",AE="",AUTH=0,LINK=0,RM=null,TOK="",ME=null,ES=null,SOUND=0,AC=null,LS="",LT=0,HDL="",EXO=0,CM=0,CMN="",MY={},LN=0,LK="",DR={c:"",n:"",t:"j"},DF={},SENDING=false,TESTMODE=0,TESTPHASE="r1",COOLDOWN=0,PREVIOUS_NAME="";
+let V="join",ERR="",AE="",AUTH=0,LINK=0,RM=null,TOK="",ME=null,ES=null,SOUND=0,AC=null,LS="",LT=0,HDL="",EXO=0,CM=0,CMN="",MY={},LN=0,LK="",DR={c:"",n:"",t:"j"},DF={},SENDING=false,TESTMODE=0,TESTPHASE="r1",COOLDOWN=0,PREVIOUS_NAME="",LAST_REVIEW_CARD="",ACKING=false;
 const DEVICE_KEY="kamad-device-id";let DEVICE="";try{DEVICE=localStorage.getItem(DEVICE_KEY)||crypto.randomUUID();localStorage.setItem(DEVICE_KEY,DEVICE)}catch(e){DEVICE="session-"+Math.random().toString(36).slice(2)}
-const fresh=()=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,sub:[],sent:{},shown:0,bi:0,joined:0,locked:0,name:"",trk:"j",demo:0,solo:0,age:0,auto:0,rw:0,cmp:0,rt:{},pend:[],ros:[],wait:0,wn:0,sid:0,pid:0});
+const fresh=()=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,sub:[],sent:{},shown:0,reviewDuration:75,event4:0,r4Ack:false,bi:0,joined:0,locked:0,name:"",trk:"j",demo:0,solo:0,age:0,auto:0,rw:0,cmp:0,rt:{},pend:[],ros:[],wait:0,wn:0,sid:0,pid:0});
 const G=fresh();
 const pad=n=>String(n).padStart(2,"0"),esc=s=>String(s).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
-const isR=()=>/^r[1-5]$/.test(G.ph),np=()=>G.np||0,tm=()=>Math.floor(G.t/60)+":"+pad(G.t%60);
+const isR=()=>/^r[1-6]$/.test(G.ph),np=()=>G.np||0,tm=()=>Math.floor(G.t/60)+":"+pad(G.t%60);
 const cn=()=>G.cn||0;
-const ttl=p=>p==="lobby"?"טרם התחיל":/^show[2-5]?$/.test(p)?"כל התוצרים של השלב":p==="win"?"המנצחים":(ST[p]||R[p]).t;
+const ttl=p=>p==="lobby"?"טרם התחיל":isShow(p)?"הצגת התוצרים":p==="win"?"המנצחים":p==="thanks"?"תודה לכל המשתתפים":(ST[p]||R[p]).t;
 function order(){const L=TK.map(t=>G.sub.filter(x=>x.t===t)),o=[];for(let i=0;i<Math.max(0,...L.map(l=>l.length));i++)L.forEach(l=>{if(l[i])o.push(l[i])});return o}
 async function api(p,b){try{const r=await fetch("/api/"+p,{method:"POST",headers:{"Content-Type":"application/json","x-tok":TOK},body:JSON.stringify(b||{})});return await r.json()}catch(e){return{err:"אין חיבור לשרת."}}}
 function submit(){if(SENDING||!isR()||G.lock||G.sent[G.ph]||!ME)return;
@@ -185,51 +209,61 @@ if(G.trk==="s"){
  a=[answer];
 }else{a=k.f.map((_,i)=>(DF["f"+i]||"").trim());if(a.some(x=>!x)){ERR="יש למלא את שני השדות.";draw();return}}
 const round=G.ph;SENDING=true;
-api("sub",{id:ME.id,a}).then(r=>{SENDING=false;if(r.err)ERR=r.err;else{if(G.ph===round){G.sent[round]=1;DF={};ERR=""}if(navigator.vibrate)navigator.vibrate(40)}draw()}).catch(()=>{SENDING=false;ERR="השליחה נכשלה. נסו שוב.";draw()})}
+api("sub",{id:ME.id,a}).then(r=>{SENDING=false;if(r.err)ERR=r.err;else{if(G.ph===round){G.sent[round]=r.pending?"holding":1;if(!r.pending)DF={};ERR=r.pending?"ממתינים למידע נוסף מהחמ״ל. ניתן יהיה לעדכן את התשובה לאחר ההודעה.":""}if(navigator.vibrate)navigator.vibrate(40)}draw()}).catch(()=>{SENDING=false;ERR="השליחה נכשלה. נסו שוב.";draw()})}
 function rate(id,n){if(!ME)return;MY[id]=n;api("rate",{cid:ME.id,sid:id,n});draw()}
 function winv(){const W=G.W||[];return `<div class="cols">${TK.map((t,i)=>{const w=W[i];return `<div class="card tc ${i<G.wn&&w?"win":""} ${i===G.wn-1&&G.age<1?"slam":""}" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3>${i<G.wn?(w?`<div class="big" style="font-size:44px">🏆</div>${w.a.map(a=>`<p>${esc(a)}</p>`).join("")}<p class="mut">${esc(w.by)} · ${"★".repeat(Math.round(w.v))} ${w.v.toFixed(1)}</p>`:`<p class="mut">לא נאספו דירוגים.</p>`):`<p class="mut">ממתינים להכרזה...</p>`}</div>`}).join("")}</div>`}
+function fieldName(x,i){if(x.t==="j")return i?"באנר":"גג";if(x.t==="n")return i?"מה המסר?":"הקונספט";return R[x.r]?.s.sms?"SMS מבצעי לתושבים":"תגובה לכתב"}
+function commanderGuide(p){const r=isShow(p)?showRound(p):p;if(!R[r])return"";return `<div class="card commander-guide"><h3>מה התבקשו להגיש?</h3><p class="mut">שלב ${r.slice(1)}: ${esc(R[r].t)}</p><div class="guide-grid">${TK.map(t=>`<div><b>${T[t][1]} ${T[t][0]}</b><p>${esc(R[r][t].q)}</p><small>${t==="s"?(R[r].s.sms?"שדה אחד: SMS מבצעי קצר לתושבים":"שדה אחד: תגובה אחת לכתב שפנה"):R[r][t].f.join(" + ")}</small></div>`).join("")}</div><p class="mut">בדירוג בדקו התאמה למידע שנמסר, בהירות, דיוק והתאמה לסוג התוצר. ביצירתיות חשוב גם רעיון מקורי שניתן להציג.</p></div>`}
 function cmdv(){const p=G.ph;
-if(p==="lobby")return `<div class="card"><h2>🎖️ ${esc(CMN)}</h2><p>ממתינים להתחלה. כשיגיעו תוצרים תראו אותם כאן בזמן אמת ותדרגו אותם מ־1 עד 5 כוכבים.</p><button class="lnk" onclick="CM=0;draw()">יציאה</button></div>`;
-if(p==="story"||p.startsWith("twist"))return `<div class="card"><h2>אירוע חדש</h2><p>${esc(ST[p].d)}</p><p class="mut">האירוע מוצג כעת במסך המרכזי.</p></div>`;
-if(p==="win")return `<div class="card"><h2>ההכרזה על המסך המרכזי</h2><p>הדירוגים נסגרו.</p></div>`;
-const o=LN;LN=G.sub.length;
-return `<div class="card">${clock()}<h3>🎖️ התוצרים בזמן אמת</h3><p class="mut">${G.sub.length} תוצרים עד עכשיו. דרגו כל תוצר מ־1 עד 5 כוכבים.</p></div>`+factsCard(p)+G.sub.map((x,i)=>`<div class="card ${i>=o?"slam":""}"><p class="mut">${T[x.t][1]} ${T[x.t][0]} · סבב ${x.r.slice(1)} · ${esc(x.by)}</p>${x.a.map(a=>`<p>${esc(a)}</p>`).join("")}<div>${[1,2,3,4,5].map(n=>`<button class="st ${n<=(MY[x.id]||0)?"on":""}" onclick="rate(${x.id},${n})">★</button>`).join("")}</div></div>`).reverse().join("")}
+if(p==="lobby")return `<div class="card"><h2>מפקדים</h2><p>כשהמשתתפים יגישו תוצרים תראו אותם כאן. כל תוצר יופיע עם המשימה והסבר לשדות, ותוכלו לדרג אותו מ־1 עד 5.</p></div>`;
+if(p==="story"||p.startsWith("twist"))return `<div class="card"><h2>${esc(ST[p].t)}</h2><p>${esc(ST[p].d)}</p></div>`;
+if(p==="win"||p==="thanks")return `<div class="card"><h2>הסיום מוצג במסך ההקרנה</h2><p>תודה על הדירוגים.</p></div>`;
+const r=isShow(p)?showRound(p):p;
+const related=G.sub.filter(x=>x.r===r).slice().reverse();
+return `${commanderGuide(p)}<div class="card"><h3>תוצרים ודירוגים</h3><p class="mut">${related.length} תוצרים בשלב הזה. לחצו על 1 עד 5 כוכבים לכל תוצר.</p></div>`+related.map(x=>`<div class="card tc" style="--tc:${TCL[x.t]}"><p class="mut">${T[x.t][1]} ${T[x.t][0]} · ${esc(x.by)} · שלב ${x.r.slice(1)}</p>${x.a.map((a,i)=>`<div class="rated-field"><b>${fieldName(x,i)}</b><p>${esc(a)}</p></div>`).join("")}<div class="stars">${[1,2,3,4,5].map(n=>`<button class="st ${n<=(MY[x.id]||0)?"on":""}" onclick="rate(${x.id},${n})" aria-label="דירוג ${n}">★</button>`).join("")}</div></div>`).join("")
+}
 function pendv(){return G.pend.length?`<div class="card"><h3>ממתינים לאישור כניסה</h3>${G.pend.map(e=>`<div class="it"><b>${esc(e.n)}</b> · ${T[e.t][1]} ${T[e.t][0]}<div class="ctl"><button class="go" onclick="act('ok',${e.id})">אשר</button><button onclick="act('no',${e.id})">דחה</button></div></div>`).join("")}</div>`:""}
 async function doJoin(){const r=await api("join",{code:DR.c.trim(),name:DR.n.trim(),device:DEVICE,previousPlayerId:ME&&ME.role==="p"?ME.id:null});if(r.err){ERR=r.err;if(r.cooldown)COOLDOWN=r.cooldown;if(r.previousName)PREVIOUS_NAME=r.previousName;draw();return}ERR="";COOLDOWN=0;ME={id:r.id,role:r.role};if(r.role==="v"){TESTMODE=r.mode;TESTPHASE="r1";try{sessionStorage.setItem("testMode",TESTMODE);sessionStorage.setItem("testPhase",TESTPHASE)}catch(e){}}try{sessionStorage.setItem("me",JSON.stringify(ME))}catch(e){}if(r.role==="c"){CM=1;CMN=r.name;LN=0}connect();draw()}
 function act(a,k){api("act",{a,k})}
 function roster(t){return G.ros.filter(x=>x.t===t).map(x=>x.n)}
 function clock(){if(!isR())return"";const n=Math.max(np(),cn());const hot=G.t<=10&&!G.lock;return `<div id="rg" class="ring ${hot?"hot":""}"><svg viewBox="0 0 120 120"><circle class="rb" cx="60" cy="60" r="52"/><circle id="rf" class="rf" cx="60" cy="60" r="52" stroke-dasharray="327" stroke-dashoffset="${(327*(1-Math.min(1,G.t/RL))).toFixed(1)}"/></svg><div id="clk" class="clock ${hot?"hot":""}">${tm()}</div></div><p class="mut" style="text-align:center">${cn()} מתוך ${n} שלחו</p><div class="dots">${Array.from({length:n},(_,i)=>`<i class="${i<cn()?"on":""}"></i>`).join("")}</div>`}
 function feed(){return ""}
-function stc(){const Z=CIN[G.ph],v=Z.filter(b=>b[0]<=G.age),jp=v.some(b=>b[0]===G.age&&b[1].startsWith("JUMP")),end=Z[Z.length-1][0]+2;
-return `<div class="cin briefing"><span class="brief-label">דיווח אירוע</span><h2>${esc(ST[G.ph].t)}</h2>${v.map((b,i)=>{const j=b[1].startsWith("JUMP:");return `<p class="beat ${i===v.length-1?"current":""} ${b[0]===G.age?"new":""}">${esc(j?b[1].slice(5):b[1])}</p>`}).join("")}${G.age>=end?`<p class="scenesummary">${esc(ST[G.ph].d)}</p>`:""}</div>`}
+function stc(){const Z=CIN[G.ph],v=Z.filter(b=>b[0]<=G.age);return `<div class="cin briefing"><span class="brief-label">דיווח אירוע</span><h2>${esc(ST[G.ph].t)}</h2>${v.map((b,i)=>`<p class="beat ${i===v.length-1?"current":""} ${b[0]===G.age?"new":""}">${esc(b[1])}</p>`).join("")}</div>`}
 function gal(){
-const r="r"+(G.ph==="show"?"1":G.ph.slice(4)),v=G.sub.filter(x=>x.r===r),remain=Math.max(0,75-G.age);
-return `<section class="reviewhead"><span class="badge">סיכום שלב ${r.slice(1)}</span><h2>${esc(R[r].t)}</h2><p>הגשות המחלקה · ${v.length} תוצרים</p><div class="reviewtime"><span>זמן להצגה ולדירוג</span><strong>${Math.floor(remain/60)}:${pad(remain%60)}</strong></div><div class="reviewbar"><span style="width:${Math.max(0,remain/75*100)}%"></span></div></section><div class="reviewgrid">${TK.map(t=>`<section class="reviewgroup" style="--tc:${TCL[t]}"><div class="reviewgrouphead"><strong>${T[t][1]} ${T[t][0]}</strong><span>${v.filter(x=>x.t===t).length} תוצרים</span></div>${v.filter(x=>x.t===t).map((x,i)=>`<article class="reviewentry"><div class="reviewby">${esc(x.by)} <small>· ${i+1}</small></div>${x.a.map((a,j)=>`<p>${t==="j"?`<b>${j===0?"גג":"באנר"}</b>`:""}${esc(a)}</p>`).join("")}</article>`).join("")||`<div class="reviewempty">לא הוגשו תוצרים בשלב הזה</div>`}</section>`).join("")}</div>`
+const r=showRound(G.ph),v=G.sub.filter(x=>x.r===r);const remain=Math.max(0,(G.reviewDuration||75)-G.age);
+const x=v[G.shown]||null,key=G.ph+"/"+G.shown,animate=key!==LAST_REVIEW_CARD;LAST_REVIEW_CARD=key;
+return `<section class="reviewhead"><span class="badge">שלב ${r.slice(1)}</span><h2>הגשות המשתתפים</h2><p>${esc(R[r].t)} · ${v.length} תוצרים</p><div class="reviewtime"><span>${v.length?"כרטיסייה "+(Math.min(G.shown+1,v.length))+" מתוך "+v.length:"אין הגשות בסבב זה"}</span><strong>${Math.floor(remain/60)}:${pad(remain%60)}</strong></div><div class="reviewbar"><span style="width:${Math.max(0,remain/(G.reviewDuration||75)*100)}%"></span></div></section><section class="review-stage">${x?`<article class="spotlight-card ${animate?"card-enter":""}" style="--tc:${TCL[x.t]}"><div class="spotlight-top"><span>${T[x.t][1]} ${T[x.t][0]}</span><span>שלב ${r.slice(1)}</span></div><h2>${esc(x.by)}</h2><div class="spotlight-answer">${x.a.map((a,i)=>`<div class="spotlight-field"><b>${fieldName(x,i)}</b><p>${esc(a)}</p></div>`).join("")}</div></article>`:`<div class="card spotlight-empty"><h2>אין תוצרים להצגה בשלב הזה</h2></div>`}</section><div class="review-dots">${v.slice(0,48).map((_,i)=>`<span class="${i===G.shown?"active":""}"></span>`).join("")}</div>`;
 }
 function joinUI(){return `<div style="padding:26px 4px 6px"><span class="badge">כניסה</span><h1 class="hero" style="margin-top:14px">כניסה</h1><p class="mut">הקלידו את קוד הכניסה שקיבלתם. הקוד קובע את המגמה שלכם.</p></div><div class="card"><input class="codein" inputmode="numeric" maxlength="5" placeholder="• • • • •" value="${esc(DR.c)}" oninput="DR.c=this.value"><input maxlength="20" placeholder="שם או כינוי" value="${esc(DR.n)}" oninput="DR.n=this.value"><button class="pri" onclick="doJoin()">הצטרפות</button><p class="mut" id="cooldown">${COOLDOWN>Date.now()?`לאחר הוצאה: ${Math.ceil((COOLDOWN-Date.now())/1000)} שניות עד אפשרות כניסה חוזרת. יש לבחור שם חדש.`:""}</p><p class="err">${ERR}</p><p class="mut">מי שמצטרף אחרי שהמשחק התחיל ממתין לאישור המנהל.</p></div><p style="text-align:center;margin-top:30px"><button class="lnk" onclick="go('alogin')">כניסה אדמין</button></p>`}
 function leaveGame(){if(!ME)return;const id=ME.id;dropMe();api("leave",{id});}
 function waitv(){return `<div class="card"><h2>ממתינים לאישור</h2><p>הבקשה נשלחה למנהל. תיכנסו ברגע שיאשר אתכם.</p></div>`}
+function r4Modal(){return `<div class="alert-backdrop" role="dialog" aria-modal="true" aria-labelledby="r4-title"><div class="alert-dialog"><span class="alert-kicker">עדכון חמ״ל · יום 20</span><h2 id="r4-title">זה לא היה כלי טיס עוין</h2><p>לאחר בדיקה התברר שהעצם שחצה את הגבול היה <strong>בלון</strong>. החשד הראשוני הוסר. יש לתקן את הניסוח בהתאם למידע החדש.</p><button class="pri" onclick="ackDay20()" ${ACKING?"disabled":""}>המשך (קיבלתם 30 שניות אקסטרה)</button></div></div>`}
+async function ackDay20(){if(ACKING||!ME)return;ACKING=true;const x=await api("ack-r4",{id:ME.id});ACKING=false;if(x.err)ERR=x.err;else{G.r4Ack=true;delete G.sent.r4;ERR=""}draw()}
 function play(){const p=G.ph;
-if(p==="lobby")return `<div class="card tc" style="--tc:${TCL[G.trk]}"><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><h2 style="margin-top:12px">✓ הצטרפת, ${esc(G.name)}.</h2><p>${np()===1?"אתם לבד בחדר, וזה בסדר.":np()+" משתתפים בחדר."} המנהל יתחיל בקרוב.</p><button class="lnk" onclick="leaveGame()">יציאה מהמשחק</button></div>`;
+if(p==="lobby")return `<div class="card tc" style="--tc:${TCL[G.trk]}"><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><h2 style="margin-top:12px">הצטרפת, ${esc(G.name)}.</h2><p>${np()} משתתפים מחוברים. ממתינים לפתיחה.</p></div>`;
 if(p==="story"||p.startsWith("twist"))return stc();
-if(/^show[2-5]?$/.test(p))return `<div class="card"><h2>הצגת תוצרים על המסך המרכזי</h2><p>הביטו במסך ההקרנה. התוצרים אינם מוצגים בטלפונים.</p></div>`;
-if(p==="win")return `<div class="card"><h2>סיום הפעילות</h2><p>התוצאות מוצגות על המסך המרכזי.</p></div>`;
-const k=R[p][G.trk];
-return `<div class="card tc" style="--tc:${TCL[G.trk]}">${clock()}<h2 class="${G.age<1?"slam":""}">${R[p].t}</h2><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><p style="margin-top:12px">${k.q}</p>${G.trk==="s"&&!G.sent[p]&&!G.lock?reporterChat(p):""}<div id="roundFlash">${G.fl?flash(p):""}</div>${G.sent[p]?`<p class="ok">נשלח. מחכים לשאר המחלקה.</p>`:G.lock?`<p class="mut">הזמן נגמר.</p>`:(G.trk==="s"?"":k.f.map((f,i)=>`<label class="mut">${f}</label><textarea id="f${i}" maxlength="${i?900:1600}" rows="2" oninput="DF.f${i}=this.value">${esc(DF["f"+i]||"")}</textarea>`).join(""))+`<button class="pri" onclick="submit()">${G.trk==="s"?(k.sms?"שליחת SMS":"שליחת התגובה"):"שליחה"}</button><p class="err">${ERR}</p>`}</div>`+factsCard(p)+feed()}
+if(isShow(p))return `<div class="card"><h2>התוצרים מוצגים במסך ההקרנה</h2><p>הביטו במסך המרכזי.</p></div>`;
+if(p==="win")return `<div class="card"><h2>הכרזת המנצחים</h2><p>הדירוגים מוצגים במסך ההקרנה.</p></div>`;
+if(p==="thanks")return `<div class="thanks phone-thanks"><h2>תודה לכל המשתתפים</h2><p>המשחק הסתיים.</p></div>`;
+const k=R[p][G.trk],holding=p==="r4"&&G.sent.r4==="holding"&&!G.event4;
+const block=holding?`<div class="waiting-update"><h3>ממתינים למידע נוסף מהחמ״ל</h3><p>התשובה הראשונית התקבלה, אבל האירוע עדיין בבדיקה. אל תסגרו את המסך.</p><p>העדכון יגיע בעוד <strong>${tm()}</strong></p></div>`:G.sent[p]?`<p class="ok">התוצר נשלח.</p>`:G.lock?`<p class="mut">הזמן נגמר.</p>`:(G.trk==="s"?reporterChat(p):k.f.map((f,i)=>`<label class="mut">${f}</label><textarea id="f${i}" maxlength="${i?900:1600}" rows="3" oninput="DF.f${i}=this.value">${esc(DF["f"+i]||"")}</textarea>`).join(""))+`<button class="pri" onclick="submit()">${G.trk==="s"?(k.sms?"שליחת SMS":"שליחת התגובה"):"שליחה"}</button><p class="err">${ERR}</p>`;
+return `<div class="card tc" style="--tc:${TCL[G.trk]}">${clock()}<h2>${R[p].t}</h2><span class="chip">${T[G.trk][1]} ${T[G.trk][0]}</span><p style="margin-top:12px">${k.q}</p><div id="roundFlash">${G.fl?flash(p):""}</div>${block}</div>${factsCard(p)}${p==="r4"&&G.event4&&!G.r4Ack?r4Modal():""}`;
+}
 function screen(){
 if(!AUTH&&!LINK)return `<div class="card scr"><h2>ממתינים לאדמין</h2><p class="mut">פתחו את לוח הבקרה בטלפון כדי לחבר את המסך.</p></div>`;
 const p=G.ph;
 if(p==="lobby")return `<div class="card scr"><h2>הצטרפו בקוד</h2><div class="cols">${TK.map(t=>`<div class="tile" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3><div class="code">${TC[t]}</div><div class="names">${roster(t).map(n=>`<span class="chip">${T[t][1]} ${esc(n)}</span>`).join("")||`<span class="mut">ממתינים לראשון...</span>`}</div><p class="mut">${roster(t).length} הצטרפו</p></div>`).join("")}</div><p>${np()} משתתפים מחוברים כרגע ·</p></div>`;
 if(p==="story"||p.startsWith("twist"))return `<div class="scr">${stc()}</div>`;
-if(/^show[2-5]?$/.test(p))return gal();
-if(p==="win")return `<div class="scr">${winv()}</div>`;
+if(isShow(p))return gal();
+if(p==="win")return `<div class="scr"><section class="reviewhead"><h2>תוצאות החודש</h2><p>הדירוגים הסופיים</p></section>${winv()}</div>`;
+if(p==="thanks")return `<div class="thanks screen-thanks"><span>NEWS404</span><h1>תודה לכל המשתתפים</h1><div class="thanks-rule"></div><p>המשחק הסתיים</p></div>`;
 return `<div class="card scr">${clock()}<h2 class="${G.age<1?"slam":""}">${R[p].t}</h2>${G.fl?flash(p):""}</div><div class="cols">${TK.map(t=>`<div class="card tc" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3><p>${R[p][t].q}</p></div>`).join("")}</div>`+factsCard(p)+feed()}
-function setTestPhase(p){if(!["live","story","r1","r2","r3","r4","r5","show","show2","show3","show4","show5","win"].includes(p))return;TESTPHASE=p;try{sessionStorage.setItem("testPhase",p)}catch(e){}draw()}
+function setTestPhase(p){if(!["live","story","r1","r2","r3","r4","r5","r6","show","show2","show3","show4","show5","show6","win","thanks"].includes(p))return;TESTPHASE=p;try{sessionStorage.setItem("testPhase",p)}catch(e){}draw()}
 function previewTest(){
 const p=TESTPHASE==="live"?G.ph:TESTPHASE;
-const active=/^r[1-5]$/.test(p),sh=/^show[2-5]?$/.test(p);
+const active=/^r[1-6]$/.test(p),sh=isShow(p);
 const phaseName=p==="live"?"בזמן אמת":p==="story"?"תחילת המבצע":p==="win"?"סיום":sh?"תוצרים · שלב "+(p==="show"?1:p.slice(4)):(R[p]?.t||"שלב נוכחי");
-const round=sh?"r"+(p==="show"?1:p.slice(4)):p;
+const round=sh?showRound(p):p;
 const tile=t=>{
  let content="";
  if(p==="story")content=`<p>תחילת המבצע. המידע ייחשף למשתתפים לאחר שמתחילים את הפעילות.</p>`;
@@ -239,26 +273,26 @@ const tile=t=>{
  if(t==="s")content+=R[p].s.sms?`<div class="previewentry">SMS מבצעי לתושבים: ______</div>`:`<div class="previewmsg"><b>${esc(REPORTER[p].name)}:</b> ${esc(REPORTER[p].msg)}</div><div class="previewentry">תגובה לכתב: ______</div>`;
  else content+=(R[p][t].f||[]).map(f=>`<div class="previewentry">${esc(f)}: ______</div>`).join("");
  if(TESTPHASE==="live"&&G.fl)content+=flash(p);
- }else if(p==="win")content="הצגת התוצרים הזוכים והדירוגים";
+ }else if(p==="win")content="הצגת התוצרים הזוכים והדירוגים";else if(p==="thanks")content="תודה לכל המשתתפים";
  else content="בחרו שלב בתפריט כדי לבדוק את המסך.";
  return `<section class="testtile" style="--tc:${TCL[t]}"><h3>${T[t][1]} ${T[t][0]}</h3>${content}</section>`;
 };
-const cmd=()=>`<section class="testtile" style="--tc:#a98df4"><h3>מפקדים | דירוג תוצרים</h3><p>תוצרים שהוגשו במשחק: ${G.sub.length}</p>${G.sub.filter(x=>sh?x.r===round:true).slice(-8).reverse().map(x=>`<div class="previewentry"><b>${T[x.t][0]} · ${esc(x.by)}</b>${x.a.map(a=>`<p>${esc(a)}</p>`).join("")}</div>`).join("")||"עדיין אין הגשות. דירוג אפשרי רק לאחר שהוגשו תוצרים אמיתיים."}</section>`;
-const phases=[["r1","יום 1"],["r2","יום 6"],["r3","יום 12"],["r4","יום 20"],["r5","יום 30"],["live","שידור חי"]];
+const cmd=()=>`<section class="testtile" style="--tc:#a98df4"><h3>מפקדים | הסבר ודירוג</h3>${R[round]?`<p><b>${esc(R[round].t)}</b></p>${TK.map(t=>`<div class="previewentry"><b>${T[t][0]}:</b> ${esc(t==="s"?(R[round].s.sms?"SMS מבצעי קצר":"תגובה אחת לכתב"):R[round][t].f.join(" + "))}</div>`).join("")}`:""}<p>תוצרים בשלב: ${G.sub.filter(x=>x.r===round).length}</p>${G.sub.filter(x=>x.r===round).slice(-8).reverse().map(x=>`<div class="previewentry"><b>${T[x.t][0]} · ${esc(x.by)}</b>${x.a.map((a,i)=>`<p><b>${fieldName(x,i)}:</b> ${esc(a)}</p>`).join("")}</div>`).join("")||"אין עדיין הגשות בשלב הזה."}</section>`;
+const phases=[["r1","יום 1"],["r2","יום 6"],["r3","יום 12"],["r4","יום 20"],["r5","יום 30"],["r6","הפסקת אש"],["thanks","תודה"],["live","שידור חי"]];
 return `<div class="testhdr"><span class="badge">מצב בדיקה · ${TESTMODE} מסכים</span><h2>${esc(phaseName)}</h2><p>תצוגת בדיקה לקריאה בלבד. ניתן לבחור כל יום גם לפני תחילת הפעילות.</p><div class="ctl" style="justify-content:center;flex-wrap:wrap">${phases.map(([id,label])=>`<button class="${p===id?"pri":""}" onclick="setTestPhase('${id}')">${label}</button>`).join("")}</div><p style="margin-top:8px"><button class="lnk" onclick="leaveTest()">יציאה ממצב בדיקה</button></p></div><div class="testgrid">${TK.map(tile).join("")}${TESTMODE===4?cmd():""}</div>${active?factsCard(p):""}`;
 }
 function leaveTest(){dropMe();draw()}
 function adminRoster(){const people=G.people||[];return `<div class="card"><h3>משתתפים מחוברים · ${people.length}</h3><p class="mut">לחצו על שם כדי להוציא משתתף. אפשר להיכנס שוב עם קוד הכניסה.</p><div class="kickgrid">${people.map(p=>`<button class="kickname" onclick="kickPlayer('${p.id}')">${T[p.t][1]} ${esc(p.n)} <span>הוצאה ✕</span></button>`).join("")||`<p class="mut">אין משתתפים מחוברים.</p>`}</div></div>`}
 function kickPlayer(id){if(confirm("להוציא את המשתתף מהמשחק?"))act("ki",id)}
 function admin(){const i=PHS.indexOf(G.ph),nx=PHS[i+1],r=isR(),L=G.ph==="lobby",d=c=>c?"disabled":"";
-const pre=nx?({story:"הצגת הסיפור",r1:"הסבב הראשון",show:"הצגת כל התוצרים של שלב 1",twist:"התפתחות חדשה במבצע",r2:"הסבב השני",show2:"הצגת כל התוצרים של שלב 2",twist3:"בקשת פרטים שלא אושרו",r3:"הסבב השלישי",show3:"הצגת תוצרי שלב 3",twist4:"עדכון הנחיות לציבור",r4:"הסבב הרביעי",show4:"הצגת תוצרי שלב 4",twist5:"סיכום החודש",r5:"הסבב החמישי",show5:"הצגת תוצרי שלב 5",win:"הכרזת המנצחים לפי הדירוג"})[nx]:"אין, זה השלב האחרון";
-const st=({lobby:"ממתין להפעלה",story:"הסיפור על המסך",twist:"השינוי בסיפור על המסך",twist3:"התפתחות חדשה על המסך",twist4:"התפתחות חדשה על המסך",twist5:"התפתחות חדשה על המסך",show:"כל תוצרי שלב 1 מוצגים",show2:"כל תוצרי שלב 2 מוצגים",show3:"כל תוצרי שלב 3 מוצגים",show4:"כל תוצרי שלב 4 מוצגים",show5:"כל תוצרי שלב 5 מוצגים",win:"המנצחים על המסך"})[G.ph]||(G.lock?"הסבב נסגר":G.pause?"מושהה":"הסבב פתוח");
+const pre=nx?({story:"פתיחת המבצע",r1:"יום 1 · משימות",show:"תוצרי יום 1",twist:"יום 6 · האירוע",r2:"יום 6 · משימות",show2:"תוצרי יום 6",twist3:"יום 12 · האירוע",r3:"יום 12 · משימות",show3:"תוצרי יום 12",twist4:"יום 20 · האירוע",r4:"יום 20 · משימות",show4:"תוצרי יום 20",twist5:"יום 30 · האירוע",r5:"יום 30 · משימות",show5:"תוצרי יום 30",twist6:"הפסקת האש",r6:"סבב הסיום",show6:"תוצרי הסיום",win:"הכרזת המנצחים",thanks:"שקופית תודה"})[nx]:"אין";
+const st=({lobby:"ממתין להפעלה",story:"הסיפור על המסך",twist:"השינוי בסיפור על המסך",twist3:"התפתחות חדשה על המסך",twist4:"התפתחות חדשה על המסך",twist5:"התפתחות חדשה על המסך",show:"כל תוצרי שלב 1 מוצגים",show2:"כל תוצרי שלב 2 מוצגים",show3:"כל תוצרי שלב 3 מוצגים",show4:"כל תוצרי שלב 4 מוצגים",show5:"תוצרי שלב 5 מוצגים",show6:"תוצרי שלב 6 מוצגים",twist6:"סיום המבצע על המסך",win:"המנצחים על המסך",thanks:"תודה לכל המשתתפים"})[G.ph]||(G.lock?"הסבב נסגר":G.pause?"מושהה":"הסבב פתוח");
 return `${pendv()}<div class="card"><p class="mut">קודי כניסה, אחד לכל מגמה</p><div class="cols">${TK.map(t=>`<div class="tile" style="--tc:${TCL[t]}"><b>${T[t][1]} ${T[t][0]}</b><div class="code">${TC[t]}</div></div>`).join("")}</div><p class="mut">קוד מפקדים: <b>${CC}</b></p><div class="ctl"><button onclick="go('screen')">מסך הקרנה</button><button onclick="go('join')">יציאה לדף הבית</button></div></div>
-<div class="card"><h3>לוח בקרה</h3><p class="mut">גרסה ${BUILD} · שרת: ${esc(G.build||"בודק...")}</p><div class="g3"><div><b>${np()}</b>משתתפים מחוברים</div><div><b>${r?cn():0}</b>הגשות</div><div><b>${pad(i)}/16</b>שלב</div></div></div>
-<div class="card"><p class="mut">שלב נוכחי</p><h3>${ttl(G.ph)}</h3><p>${st}</p>${L?`<p class="mut">הצטרפו: ${TK.map(t=>T[t][1]+" "+roster(t).length).join(" · ")}</p>`:""}${(/^show[2-5]?$/.test(G.ph)||G.ph==="win")?`<p class="mut">${G.sub.length} תוצרים · ${(G.rc||0)} דירוגים</p>`:""}${clock()}${r?`<p class="mut">${TK.map(t=>T[t][0]+" "+G.sub.filter(x=>x.t===t&&x.r===G.ph).length).join(" · ")}</p>`:""}<p class="mut">מבט מקדים, רק לך: ${pre}</p>
-<div class="ctl"><button class="go" onclick="act('nx')">${L?"התחל":"השלב הבא"}</button><button onclick="act('ps')" ${d(!r)}>${G.pause?"המשך":"השהה"}</button><button onclick="act('cl')" ${d(!r||G.lock)}>סגור סבב</button><button onclick="act('tm')" ${d(!r||G.lock)}>הוסף 30 שניות</button><button onclick="act('tw')" ${d(!r)}>מבזק פתע</button><button onclick="act('lk')">${G.locked?"פתח כניסה":"נעל כניסה"}</button><button style="display:none" onclick="act('sn')" ${d(G.ph!=="show")}>הצג רעיון הבא</button><button style="display:none" onclick="act('sa')" ${d(G.ph!=="show")}>הצג הכול</button><button style="grid-column:1/-1" onclick="act('wn')" ${d(G.ph!=="win")}>חשוף מנצח הבא</button><button style="grid-column:1/-1" onclick="act('rs')">איפוס משחק</button></div></div>`+adminRoster()+factsCard(G.ph)+conn()+tcard()+``}
+<div class="card"><h3>לוח בקרה</h3><p class="mut">גרסה ${BUILD} · שרת: ${esc(G.build||"בודק...")}</p><div class="g3"><div><b>${np()}</b>משתתפים מחוברים</div><div><b>${r?cn():0}</b>הגשות</div><div><b>${pad(i)}/${PHS.length-1}</b>שלב</div></div></div>
+<div class="card"><p class="mut">שלב נוכחי</p><h3>${ttl(G.ph)}</h3><p>${st}</p>${L?`<p class="mut">הצטרפו: ${TK.map(t=>T[t][1]+" "+roster(t).length).join(" · ")}</p>`:""}${(isShow(G.ph)||G.ph==="win")?`<p class="mut">${G.sub.length} תוצרים · ${(G.rc||0)} דירוגים</p>`:""}${clock()}${r?`<p class="mut">${TK.map(t=>T[t][0]+" "+G.sub.filter(x=>x.t===t&&x.r===G.ph).length).join(" · ")}</p>`:""}<p class="mut">מבט מקדים, רק לך: ${pre}</p>
+<div class="ctl"><button class="go" onclick="act('nx')" ${d(!nx)}>${L?"התחל":"השלב הבא"}</button><button onclick="act('ps')" ${d(!r)}>${G.pause?"המשך":"השהה"}</button><button onclick="act('cl')" ${d(!r||G.lock)}>סגור סבב</button><button onclick="act('tm')" ${d(!r||G.lock)}>הוסף 30 שניות</button><button onclick="act('tw')" ${d(!r||G.ph==="r4")}>מבזק פתע</button><button onclick="act('lk')">${G.locked?"פתח כניסה":"נעל כניסה"}</button><button onclick="act('sn')" ${d(!isShow(G.ph))}>הצג כרטיסייה הבאה</button><button style="display:none" onclick="act('sa')" ${d(G.ph!=="show")}>הצג הכול</button><button style="grid-column:1/-1" onclick="act('wn')" ${d(G.ph!=="win")}>חשוף מנצח הבא</button><button style="grid-column:1/-1" onclick="act('rs')">איפוס משחק</button></div></div>`+adminRoster()+factsCard(G.ph)+conn()+tcard()+``}
 function cmpCard(){if(!G.cmp)return"";return `<div class="card"><h3>מה רואים המשתתפים</h3><div class="pv">${play()}</div></div><div class="card"><h3>מה רואים בהקרנה</h3><div class="pv">${screen()}</div></div>`}
-function tcard(){return `<div class="card"><h3>משך המשחק המלא</h3><p>5 תחנות לאורך חודש × 3 דקות = 15 דקות. ארבע התפתחויות עלילתיות ופתיחה = כ־3 דקות. הצגת תוצרים ודירוג אחרי כל סבב: מומלץ 75 שניות × 5 = 6:15 דקות. סיכום והכרזת מנצחים: דקה עד שתיים. <b>סה״כ: כ־25 דקות</b>.</p><p class="mut">השלבים הקולנועיים והתוצרים מתקדמים אוטומטית. מצב הרצה אוטומטית מהירה מיועד רק לבדיקות ומקצר את הזמנים. אפשר להשהות או לדלג ידנית בלוח הבקרה.</p></div><div class="card"><h3>בדיקה והדגמה</h3><div class="ctl"><button class="go" onclick="act('au')">${G.auto?"עצור בדיקה מהירה":"בדיקה מהירה (מקצר זמנים)"}</button><button onclick="act('rs')">התחלה מחדש</button></div></div>`}
+function tcard(){return `<div class="card"><h3>משך המשחק</h3><p>6 סבבי עבודה בני 3 דקות, הצגת תוצרים בכרטיסיות, חמישה מעברי סיפור, הכרזת מנצחים ושקופית תודה. משך מתוכנן כ־30 דקות, ויכול להתארך לפי מספר ההגשות.</p><p class="mut">המשחק מתקדם אוטומטית. בלוח הבקרה ניתן להשהות או לדלג. ביום 20 נשלח עדכון מתוזמן ב־1:30 ונוספות 30 שניות.</p></div><div class="card"><h3>בדיקה והדגמה</h3><div class="ctl"><button class="go" onclick="act('au')">${G.auto?"עצור בדיקה מהירה":"בדיקה מהירה (מקצר זמנים)"}</button><button onclick="act('rs')">התחלה מחדש</button></div></div>`}
 function conn(){const o=location.origin;return `<div class="card"><h3>חיבור מכשירים</h3><p>משתתפים: <b>${o}</b><br>מסך הקרנה: <b>${o}/#screen</b><br>שליטה מהטלפון: <b>${o}/#admin</b></p><p class="mut">מחובר לשרת בזמן אמת.</p></div>`}
 function alogin(){return `<div class="card"><h2>כניסת מנהל</h2><input id="pw" type="password" autocomplete="off" placeholder="סיסמה" onkeydown="if(event.key==='Enter')doAdmin()"><button class="pri" onclick="doAdmin()">כניסה</button><p class="err">${AE}</p><button class="lnk" onclick="go('join')">חזרה</button></div>`}
 async function doAdmin(){const r=await api("login",{pw:document.getElementById("pw").value});if(r.tok){TOK=r.tok;try{sessionStorage.setItem("tok",TOK)}catch(e){}AE="";AUTH=1;V="admin";connect()}else AE="הסיסמה שגויה.";draw()}
@@ -280,15 +314,15 @@ function draw(){sync();{const h=head();if(h!==HDL){document.getElementById("hd")
 function tickDraw(){if(V==="admin"||V==="screen"||(V==="join"&&(G.joined||CM||G.wait||TESTMODE))){const a=document.activeElement;
 if(a&&a.tagName==="TEXTAREA"){const f=document.getElementById("roundFlash");if(f)f.innerHTML=G.fl?flash(G.ph):"";const c=document.getElementById("clk");if(c){const h=G.t<=10&&!G.lock,rf=document.getElementById("rf"),rg=document.getElementById("rg");c.textContent=tm();c.className="clock"+(h?" hot":"");if(rf)rf.style.strokeDashoffset=(327*(1-Math.min(1,G.t/RL))).toFixed(1);if(rg)rg.className="ring"+(h?" hot":"")}sfx()}else draw()}}
 function applySnap(d){
-const previousRound=G.ph,previousLock=G.lock,previousSent=Boolean(G.sent?.[G.ph]),previousJoined=G.joined,previousWait=G.wait;
-if(d.ph&&d.ph!==previousRound&&/^r[1-5]$/.test(d.ph)){DF={};ERR="";SENDING=false}
+const previousRound=G.ph,previousLock=G.lock,previousSent=Boolean(G.sent?.[G.ph]),previousJoined=G.joined,previousWait=G.wait,previousEvent4=G.event4,previousAck=G.r4Ack;
+if(d.ph&&d.ph!==previousRound&&/^r[1-6]$/.test(d.ph)){DF={};ERR="";SENDING=false}
 if(d.codes){TC=d.codes.TC||TC;if(d.codes.CC)CC=d.codes.CC;delete d.codes}
-if(d.me!==undefined){const m=d.me;G.joined=m&&m.st==="in"?1:0;G.wait=m&&m.st==="wait"?1:0;if(m){G.trk=m.trk;G.name=m.name;G.sent=m.sent||{};if(m.st==="no"){ERR="הבקשה נדחתה על ידי המנהל.";dropMe()}else if(m.st==="kicked"){COOLDOWN=m.kickUntil||Date.now()+20000;PREVIOUS_NAME=m.name;DR.n="";ERR="הוצאת מהמשחק. ניתן לבקש כניסה מחדש בעוד 20 שניות, בשם אחר.";dropMe()}}delete d.me}
+if(d.me!==undefined){const m=d.me;G.joined=m&&m.st==="in"?1:0;G.wait=m&&m.st==="wait"?1:0;if(m){G.trk=m.trk;G.name=m.name;G.sent=m.sent||{};G.r4Ack=!!m.r4Ack;if(d.ph==="r4"&&m.pre4&&m.pre4.length&&!DF.sms&&!DF.f0){if(G.trk==="s")DF.sms=m.pre4[0];else{DF.f0=m.pre4[0]||"";DF.f1=m.pre4[1]||""}};if(m.st==="no"){ERR="הבקשה נדחתה על ידי המנהל.";dropMe()}else if(m.st==="kicked"){COOLDOWN=m.kickUntil||Date.now()+20000;PREVIOUS_NAME=m.name;DR.n="";ERR="הוצאת מהמשחק. ניתן לבקש כניסה מחדש בעוד 20 שניות, בשם אחר.";dropMe()}}delete d.me}
 if(d.my){MY=d.my;delete d.my}
 Object.assign(G,d);LINK=1;
 // A typed answer stays in focus during timer updates, but a new stage,
 // a closed round or a confirmed submission must redraw immediately.
-const structuralChange=G.ph!==previousRound||G.lock!==previousLock||Boolean(G.sent?.[G.ph])!==previousSent||G.joined!==previousJoined||G.wait!==previousWait;
+const structuralChange=G.ph!==previousRound||G.lock!==previousLock||Boolean(G.sent?.[G.ph])!==previousSent||G.joined!==previousJoined||G.wait!==previousWait||G.event4!==previousEvent4||G.r4Ack!==previousAck;
 if(structuralChange)draw();else tickDraw()}
 function dropMe(){ME=null;CM=0;TESTMODE=0;G.joined=0;G.wait=0;try{sessionStorage.removeItem("me");sessionStorage.removeItem("testMode");sessionStorage.removeItem("testPhase")}catch(e){}if(ES){ES.close();ES=null}draw()}
 function connect(){if(ES){ES.close();ES=null}LINK=0;
