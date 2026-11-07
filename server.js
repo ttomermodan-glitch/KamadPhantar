@@ -13,13 +13,13 @@ let S=fresh();
 function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=999}
 function next(){const i=PHS.indexOf(S.ph);if(i<PHS.length-1){S.locked=1;setPh(PHS[i+1])}}
 function addSub(x){x.id=++S.sid;S.sub.push(x);S.sv++;if(S.demo)S.cr[x.id]={_1:rr(),_2:rr()}}
-function bot(n){if(!S.demo)return;for(let k=0;k<n&&S.bi<23;k++,S.bi++){const t=TK[S.bi%3];addSub({t,r:S.ph,a:pick(bank.B[S.ph][t]),by:bank.BN[S.bi%bank.BN.length]})}}
+function bot(n){}
 function order(){const L=TK.map(t=>S.sub.filter(x=>x.t===t)),o=[];for(let i=0;i<Math.max(0,...L.map(l=>l.length));i++)L.forEach(l=>{if(l[i])o.push(l[i])});return o}
 function winners(){return TK.map(t=>{let b=null;S.sub.filter(x=>x.t===t).forEach(x=>{const v=Object.values(S.cr[x.id]||{});if(!v.length)return;const a=v.reduce((p,q)=>p+q,0)/v.length;if(!b||a>b.v||(a===b.v&&v.length>b.n))b={t,a:x.a,by:x.by,v:a,n:v.length}});return b})}
-const inn=()=>S.pl.filter(p=>p.st==="in"&&p.online);
-const np=()=>(S.demo?23:0)+inn().length; // Only approved, connected players; commanders are never counted.
+const inn=()=>S.pl.filter(p=>p.st==="in"&&p.online&&Date.now()-p.last<13000);
+const np=()=>inn().length; // Only approved, connected players; commanders are never counted.
 const nc=()=>new Set([...cl.values()].filter(c=>c.role==="c").map(c=>c.id)).size;
-const ros=()=>{const o=inn().map(p=>({n:p.n,t:p.t}));if(S.demo)for(let k=0;k<23;k++)o.push({n:bank.BN[k%bank.BN.length],t:TK[k%3]});return o};
+const ros=()=>inn().map(p=>({n:p.n,t:p.t}));
 
 function act(a,k){
  if(a==="nx")next();
@@ -30,14 +30,19 @@ function act(a,k){
  else if(a==="sn"&&/^show[2-5]?$/.test(S.ph)){S.shown=Math.min(S.shown+1,order().length);S.age=0}
  else if(a==="sa"&&/^show[2-5]?$/.test(S.ph))S.shown=999;
  else if(a==="wn"&&S.ph==="win"){S.wn=Math.min(3,S.wn+1);S.age=0}
+ else if(a==="ki"){const p=S.pl.find(x=>x.id===k&&x.st==="in");if(p){p.online=false;p.st="kicked";p.last=0}}
  else if(a==="ok"||a==="no"){const p=S.pl.find(x=>x.id===k&&x.st==="wait");if(p)p.st=a==="ok"?"in":"no"}
  else if(a==="lk")S.locked=S.locked?0:1;
- else if(a==="dm"&&!isR(S.ph))S.demo=S.demo?0:1;
+ else if(a==="dm"){}
  else if(a==="au"){S.auto=S.auto?0:1;S.rw=0;S.pause=0}
  else if(a==="rs"){const o=S;S=fresh(o.demo,o.pl.filter(p=>p.st==="in"&&p.online).map(p=>({...p,sent:{}})));S.cm=o.cm}
  push()}
 
+let lastPresenceCheck=0;
 function tick(){
+ // Every five seconds remove connections that stopped sending a heartbeat.
+ const now=Date.now();
+ if(now-lastPresenceCheck>=5000){lastPresenceCheck=now;for(const p of S.pl)if(p.online&&now-p.last>12000)p.online=false;}
  if(!S.pause&&S.ph!=="lobby")S.age++;
  if(S.auto){const p=S.ph;
   if(p==="lobby")next();
@@ -63,7 +68,7 @@ function snap(c){
  if(c.role==="p"){const p=S.pl.find(x=>x.id===c.id);g.me=p?{st:p.st,trk:p.t,name:p.n,sent:p.sent}:null}
  if(c.role==="c")g.my=S.my[c.id]||{};
  if(c.role==="s")g.codes={TC:bank.TC};
- if(c.role==="a"){g.codes={TC:bank.TC,CC:bank.CC};g.pend=S.pl.filter(p=>p.st==="wait").map(p=>({id:p.id,n:p.n,t:p.t}));g.rc=Object.values(S.cr).reduce((a,o)=>a+Object.keys(o).length,0)}
+ if(c.role==="a"){g.people=inn().map(p=>({id:p.id,n:p.n,t:p.t}));g.codes={TC:bank.TC,CC:bank.CC};g.pend=S.pl.filter(p=>p.st==="wait").map(p=>({id:p.id,n:p.n,t:p.t}));g.rc=Object.values(S.cr).reduce((a,o)=>a+Object.keys(o).length,0)}
  return g}
 function push(){for(const c of cl.values())c.res.write("data:"+JSON.stringify(snap(c))+"\n\n")}
 
@@ -75,9 +80,9 @@ http.createServer(async(q,r)=>{
  if(q.method==="GET"&&(P==="/"||P==="/index.html")){r.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});return r.end(fs.readFileSync(path.join(__dirname,"public","index.html")))}
  if(q.method==="GET"&&P==="/api/stream"){
   const role=u.searchParams.get("role"),id=u.searchParams.get("id")||"",tok=u.searchParams.get("tok")||"";
-  if(!["a","p","c","s"].includes(role)||(role==="a"&&!toks.has(tok))||(role==="p"&&!S.pl.some(p=>p.id===id))||(role==="c"&&!S.cm[id]))return send(r,{err:"no"},role==="a"?401:404);
+  if(!["a","p","c","s"].includes(role)||(role==="a"&&!toks.has(tok))||(role==="p"&&!S.pl.some(p=>p.id===id&&!["left","kicked","no"].includes(p.st)))||(role==="c"&&!S.cm[id]))return send(r,{err:"no"},role==="a"?401:404);
   r.writeHead(200,{"Content-Type":"text/event-stream","Cache-Control":"no-cache","Connection":"keep-alive","X-Accel-Buffering":"no"});
-  const c={res:r,role,id,sv:0,sh:null},k=crypto.randomUUID();cl.set(k,c);if(role==="p"){const p=S.pl.find(x=>x.id===id);if(p){p.online=true;p.last=Date.now()}}
+  const c={res:r,role,id,sv:0,sh:null},k=crypto.randomUUID();cl.set(k,c);if(role==="p"){const p=S.pl.find(x=>x.id===id);if(p&&p.st==="in"){p.online=true;p.last=Date.now()}}
   r.write("data:"+JSON.stringify(snap(c))+"\n\n");q.on("close",()=>{cl.delete(k);if(role==="p"){const p=S.pl.find(x=>x.id===id);if(p&&!Array.from(cl.values()).some(c=>c.role==="p"&&c.id===id)){p.last=Date.now();setTimeout(()=>{if(!Array.from(cl.values()).some(c=>c.role==="p"&&c.id===id)&&p.online&&Date.now()-p.last>=4500){p.online=false;push()}},4700)}}});push();return}
  if(q.method!=="POST")return send(r,{err:"not found"},404);
  const b=await body(q);
@@ -93,13 +98,15 @@ http.createServer(async(q,r)=>{
   const t=TK.find(k=>bank.TC[k]===c);
   if(!t)return send(r,{err:"הקוד שגוי. בדקו את חמש הספרות."});
   if(!n)return send(r,{err:"הזינו שם או כינוי."});
-  const id=crypto.randomUUID(),st=S.ph==="lobby"&&!S.locked?"in":"wait";
+  const returning=S.pl.some(p=>p.st==="kicked"&&p.t===t&&p.n===n);
+  const id=crypto.randomUUID(),st=returning||S.ph==="lobby"&&!S.locked?"in":"wait";
   S.pl.push({id,n,t,st,sent:{},online:false,last:Date.now()});push();return send(r,{role:"p",id,trk:t,name:n,st})}
+ if(P==="/api/ping"){const p=S.pl.find(x=>x.id===b.id&&x.st==="in");if(!p)return send(r,{err:"inactive"},403);p.last=Date.now();p.online=true;return send(r,{ok:1})}
  if(P==="/api/leave"){const p=S.pl.find(x=>x.id===b.id);if(p){p.online=false;if(!b.temporary)p.st="left";push()}return send(r,{ok:1})}
  if(P==="/api/sub"){
   const p=S.pl.find(x=>x.id===b.id);
-  if(!p||p.st!=="in"||!p.online||!isR(S.ph)||S.lock||p.sent[S.ph])return send(r,{err:"לא ניתן לשלוח עכשיו."});
-  const a=(Array.isArray(b.a)?b.a:[]).map(x=>String(x).trim().slice(0,220)).filter(Boolean).slice(0,2);
+  if(!p||p.st!=="in"||!p.online||Date.now()-p.last>13000||!isR(S.ph)||S.lock||p.sent[S.ph])return send(r,{err:"לא ניתן לשלוח עכשיו."});
+  const a=(Array.isArray(b.a)?b.a:[]).map(x=>String(x).trim().slice(0,2600)).filter(Boolean).slice(0,2);
   if(!a.length)return send(r,{err:"הטקסט ריק."});
   addSub({t:p.t,r:S.ph,a,by:p.n});p.sent[S.ph]=1;push();return send(r,{ok:1})}
  if(P==="/api/rate"){
