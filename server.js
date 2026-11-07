@@ -3,7 +3,7 @@
 const http=require("http"),fs=require("fs"),path=require("path"),crypto=require("crypto");
 const bank=JSON.parse(fs.readFileSync(path.join(__dirname,"bank.json"),"utf8"));
 const PORT=process.env.PORT||3000,PW=process.env.ADMIN_PASSWORD||"kamadP";
-const TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","win"],RL=bank.RL;
+const BUILD="2026.11.07-audit.2",TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","win"],RL=bank.RL;
 const isR=p=>/^r[1-5]$/.test(p),rr=()=>1+Math.floor(Math.random()*5),pick=a=>a[Math.floor(Math.random()*a.length)];
 const sha=s=>crypto.createHash("sha256").update(String(s)).digest();
 const toks=new Set(),viewToks=new Set(),cl=new Map(),kickRestrictions=new Map();
@@ -11,7 +11,7 @@ const TEST3="67420",TEST4="67421",KICK_MS=20000;
 const fresh=(demo,pl)=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,shown:999,wn:0,age:0,locked:0,demo:demo||0,auto:0,rw:0,bi:0,pl:pl||[],cm:{},my:{},sub:[],cr:{},sid:0,sv:1});
 let S=fresh();
 
-function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=999}
+function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=999;S.rw=0}
 function next(){const i=PHS.indexOf(S.ph);if(i<PHS.length-1){S.locked=1;setPh(PHS[i+1])}}
 function addSub(x){x.id=++S.sid;S.sub.push(x);S.sv++;if(S.demo)S.cr[x.id]={_1:rr(),_2:rr()}}
 function bot(n){}
@@ -32,7 +32,7 @@ function act(a,k){
  else if(a==="sa"&&/^show[2-5]?$/.test(S.ph))S.shown=999;
  else if(a==="wn"&&S.ph==="win"){S.wn=Math.min(3,S.wn+1);S.age=0}
  else if(a==="ki"){const p=S.pl.find(x=>x.id===k&&x.st==="in");if(p){p.online=false;p.st="kicked";p.last=0;p.kickUntil=Date.now()+KICK_MS;if(p.device)kickRestrictions.set(p.device,{until:p.kickUntil,name:p.n});}}
- else if(a==="ok"||a==="no"){const p=S.pl.find(x=>x.id===k&&x.st==="wait");if(p)p.st=a==="ok"?"in":"no"}
+ else if(a==="ok"||a==="no"){const p=S.pl.find(x=>x.id===k&&x.st==="wait");if(p){p.st=a==="ok"?"in":"no";if(p.st==="in"&&[...cl.values()].some(c=>c.role==="p"&&c.id===p.id)){p.online=true;p.last=Date.now()}}}
  else if(a==="lk")S.locked=S.locked?0:1;
  else if(a==="dm"){}
  else if(a==="au"){S.auto=S.auto?0:1;S.rw=0;S.pause=0}
@@ -45,7 +45,7 @@ function tick(){
  const now=Date.now();
  if(now-lastPresenceCheck>=5000){lastPresenceCheck=now;for(const p of S.pl)if(p.online&&now-p.last>9500)p.online=false;}
  if(!S.pause&&S.ph!=="lobby")S.age++;
- if(S.auto){const p=S.ph;
+ if(S.auto&&!S.pause){const p=S.ph;
   if(p==="lobby")next();
   else if(p==="story"||p.startsWith("twist")){if(S.age>=(bank.CINEND[p]||38)+4)next()}
   else if(isR(p)){if(!S.lock&&S.t>8)S.t=8;if(S.lock){S.rw++;if(S.rw>=3){S.rw=0;next()}}}
@@ -62,7 +62,7 @@ function tick(){
 setInterval(tick,1000);
 
 function snap(c){
- const g={serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
+ const g={build:BUILD,serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
  if(S.ph==="win")g.W=winners();
  const all=c.role==="a"||c.role==="c"||c.role==="v"||c.role==="s",subs=all;
  if(c.sv!==S.sv||c.sh!==(c.role==="s"?S.ph:subs)){g.sub=subs?(c.role==="s"?(/^show[2-5]?$/.test(S.ph)?S.sub.filter(x=>x.r==="r"+(S.ph==="show"?"1":S.ph.slice(4))):[]):S.sub):[];c.sv=S.sv;c.sh=c.role==="s"?S.ph:subs}
@@ -74,11 +74,11 @@ function snap(c){
 function push(){for(const c of cl.values())c.res.write("data:"+JSON.stringify(snap(c))+"\n\n")}
 
 const send=(r,o,code)=>{r.writeHead(code||200,{"Content-Type":"application/json; charset=utf-8"});r.end(JSON.stringify(o))};
-const body=q=>new Promise(ok=>{let d="";q.on("data",x=>{d+=x;if(d.length>20000)q.destroy()});q.on("end",()=>{try{ok(JSON.parse(d||"{}"))}catch(e){ok({})}})});
+const body=q=>new Promise(ok=>{let d="";q.on("data",x=>{d+=x;if(d.length>20000)q.destroy()});q.on("end",()=>{try{const x=JSON.parse(d||"{}");ok(x&&typeof x==="object"&&!Array.isArray(x)?x:{})}catch(e){ok({})}})});
 
 http.createServer(async(q,r)=>{
  const u=new URL(q.url,"http://x"),P=u.pathname;
- if(q.method==="GET"&&(P==="/"||P==="/index.html")){r.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});return r.end(fs.readFileSync(path.join(__dirname,"public","index.html")))}
+ if(q.method==="GET"&&(P==="/"||P==="/index.html")){r.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store, max-age=0","Pragma":"no-cache"});return r.end(fs.readFileSync(path.join(__dirname,"public","index.html")))}
  if(q.method==="GET"&&P==="/api/stream"){
   const role=u.searchParams.get("role"),id=u.searchParams.get("id")||"",tok=u.searchParams.get("tok")||"";
   if(!["a","p","c","s","v"].includes(role)||(role==="a"&&!toks.has(tok))||(role==="p"&&!S.pl.some(p=>p.id===id&&!["left","kicked","no"].includes(p.st)))||(role==="c"&&!S.cm[id])||(role==="v"&&!viewToks.has(id)))return send(r,{err:"no"},role==="a"?401:404);
@@ -112,6 +112,10 @@ http.createServer(async(q,r)=>{
   if(!p||p.st!=="in"||!p.online||Date.now()-p.last>13000||!isR(S.ph)||S.lock||p.sent[S.ph])return send(r,{err:"לא ניתן לשלוח עכשיו."});
   const a=(Array.isArray(b.a)?b.a:[]).map(x=>String(x).trim().slice(0,2600)).filter(Boolean).slice(0,2);
   if(!a.length)return send(r,{err:"הטקסט ריק."});
+  // Journalism and networks require two texts. Spokespeople submit exactly one.
+  if(p.t==="s"&&a.length!==1)return send(r,{err:"בדוברות מגישים תוצר אחד בלבד: תגובה לכתב או SMS."},400);
+  if(p.t!=="s"&&a.length!==2)return send(r,{err:"יש למלא את שני השדות."},400);
+  if(p.t==="s"&&S.ph==="r4"&&a[0].length>320)return send(r,{err:"SMS מבצעי חייב להיות קצר (עד 320 תווים)."},400);
   addSub({t:p.t,r:S.ph,a,by:p.n});p.sent[S.ph]=1;push();return send(r,{ok:1})}
  if(P==="/api/rate"){
   const n=Math.round(+b.n),sid=+b.sid;
