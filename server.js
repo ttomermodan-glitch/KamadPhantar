@@ -3,15 +3,23 @@
 const http=require("http"),fs=require("fs"),path=require("path"),crypto=require("crypto");
 const bank=JSON.parse(fs.readFileSync(path.join(__dirname,"bank.json"),"utf8"));
 const PORT=process.env.PORT||3000,PW=process.env.ADMIN_PASSWORD||"kamadP";
-const BUILD="2026.11.07-audit.2",TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","win"],RL=bank.RL;
-const isR=p=>/^r[1-5]$/.test(p),rr=()=>1+Math.floor(Math.random()*5),pick=a=>a[Math.floor(Math.random()*a.length)];
+const BUILD="2026.11.07-v7.0",TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","twist6","r6","show6","win","thanks"],RL=bank.RL;
+const showRound=ph=>"r"+(ph==="show"?"1":ph.slice(4));
+const isShow=ph=>/^show[2-6]?$/.test(ph);
+const reviewEntries=ph=>S.sub.filter(x=>x.r===showRound(ph));
+const reviewDuration=ph=>Math.max(75,reviewEntries(ph).length*8);
+const reviewStep=ph=>Math.max(1,Math.floor(reviewDuration(ph)/Math.max(1,reviewEntries(ph).length)));
+const isR=p=>/^r[1-6]$/.test(p),rr=()=>1+Math.floor(Math.random()*5),pick=a=>a[Math.floor(Math.random()*a.length)];
 const sha=s=>crypto.createHash("sha256").update(String(s)).digest();
 const toks=new Set(),viewToks=new Set(),cl=new Map(),kickRestrictions=new Map();
 const TEST3="67420",TEST4="67421",KICK_MS=20000;
-const fresh=(demo,pl)=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,shown:999,wn:0,age:0,locked:0,demo:demo||0,auto:0,rw:0,bi:0,pl:pl||[],cm:{},my:{},sub:[],cr:{},sid:0,sv:1});
+const fresh=(demo,pl)=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,shown:0,wn:0,age:0,locked:0,demo:demo||0,auto:0,rw:0,bi:0,event4:0,pl:pl||[],cm:{},my:{},sub:[],cr:{},sid:0,sv:1});
 let S=fresh();
 
-function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=999;S.rw=0}
+function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=0;S.rw=0;
+ if(p==="r4"){S.event4=0;S.pl.forEach(x=>{x.r4Ack=false;x.pre4=null;delete x.sent.r4})}
+ if(p==="win")S.wn=0;
+}
 function next(){const i=PHS.indexOf(S.ph);if(i<PHS.length-1){S.locked=1;setPh(PHS[i+1])}}
 function addSub(x){x.id=++S.sid;S.sub.push(x);S.sv++;if(S.demo)S.cr[x.id]={_1:rr(),_2:rr()}}
 function bot(n){}
@@ -27,9 +35,9 @@ function act(a,k){
  else if(a==="ps")S.pause=S.pause?0:1;
  else if(a==="cl"&&isR(S.ph)&&!S.lock){S.t=0;S.lock=1;bot(99);next()}
  else if(a==="tm"&&isR(S.ph)&&!S.lock)S.t+=30;
- else if(a==="tw"&&isR(S.ph))S.fl=1;
- else if(a==="sn"&&/^show[2-5]?$/.test(S.ph)){S.shown=Math.min(S.shown+1,order().length);S.age=0}
- else if(a==="sa"&&/^show[2-5]?$/.test(S.ph))S.shown=999;
+ else if(a==="tw"&&isR(S.ph)&&S.ph!=="r4")S.fl=1;
+ else if(a==="sn"&&isShow(S.ph)){const n=reviewEntries(S.ph).length;if(n){S.shown=Math.min(S.shown+1,n-1);S.age=Math.min(reviewDuration(S.ph)-1,S.shown*reviewStep(S.ph))}}
+ else if(a==="sa"&&isShow(S.ph)){S.shown=Math.max(0,reviewEntries(S.ph).length-1);S.age=reviewDuration(S.ph)-1}
  else if(a==="wn"&&S.ph==="win"){S.wn=Math.min(3,S.wn+1);S.age=0}
  else if(a==="ki"){const p=S.pl.find(x=>x.id===k&&x.st==="in");if(p){p.online=false;p.st="kicked";p.last=0;p.kickUntil=Date.now()+KICK_MS;if(p.device)kickRestrictions.set(p.device,{until:p.kickUntil,name:p.n});}}
  else if(a==="ok"||a==="no"){const p=S.pl.find(x=>x.id===k&&x.st==="wait");if(p){p.st=a==="ok"?"in":"no";if(p.st==="in"&&[...cl.values()].some(c=>c.role==="p"&&c.id===p.id)){p.online=true;p.last=Date.now()}}}
@@ -41,32 +49,45 @@ function act(a,k){
 
 let lastPresenceCheck=0;
 function tick(){
- // Every five seconds remove connections that stopped sending a heartbeat.
  const now=Date.now();
  if(now-lastPresenceCheck>=5000){lastPresenceCheck=now;for(const p of S.pl)if(p.online&&now-p.last>9500)p.online=false;}
- if(!S.pause&&S.ph!=="lobby")S.age++;
- if(S.auto&&!S.pause){const p=S.ph;
-  if(p==="lobby")next();
-  else if(p==="story"||p.startsWith("twist")){if(S.age>=(bank.CINEND[p]||38)+4)next()}
-  else if(isR(p)){if(!S.lock&&S.t>8)S.t=8;if(S.lock){S.rw++;if(S.rw>=3){S.rw=0;next()}}}
-  else if(/^show[2-5]?$/.test(p)){if(S.shown<order().length){S.shown++;S.age=0}else{S.rw++;if(S.rw>=3){S.rw=0;next()}}}
-  else if(p==="win"){S.rw++;if(S.rw>=3){S.rw=0;if(S.wn<3){S.wn++;S.age=0}else S.auto=0}}}
- if(!S.pause&&isR(S.ph)&&!S.lock){S.t--;bot(Math.random()<.3?1:0);if(S.t<=0){S.t=0;S.lock=1;bot(99);next()}}
- // In normal play, narrative scenes and result reviews advance on their own.
- // Five 3-minute work rounds + five 75-second reviews + story beats = ~24 minutes.
- if(!S.pause&&!S.auto){
-  if((S.ph==="story"||S.ph.startsWith("twist"))&&S.age>=(bank.CINEND[S.ph]||38)+4)next();
-  else if(/^show[2-5]?$/.test(S.ph)&&S.age>=75)next();
+ if(!S.pause){
+  if(S.ph!=="lobby")S.age++;
+  if(S.auto){
+   if(S.ph==="lobby")next();
+   else if(S.ph==="story"||S.ph.startsWith("twist")){if(S.age>=(bank.CINEND[S.ph]||38)+4)next()}
+   else if(isR(S.ph)&&!S.lock&&S.t>9)S.t=9;
+   else if(isShow(S.ph)){S.shown=Math.min(Math.max(0,reviewEntries(S.ph).length-1),S.shown+1);if(S.age>=Math.max(4,reviewEntries(S.ph).length+2))next()}
+   else if(S.ph==="win"){S.wn=Math.min(3,Math.floor(S.age/2));if(S.age>=9)next()}
+   else if(S.ph==="thanks")S.auto=0;
+  }
+  if(isR(S.ph)&&!S.lock){
+   // Day 20: a server-side, single global surprise exactly at 1:30 remaining.
+   // Grant extra 30 seconds once; individual players must acknowledge it.
+   if(S.ph==="r4"&&!S.event4&&S.t<=90){S.event4=1;S.t+=30;S.fl=1}
+   S.t--;
+   if(S.t<=0){S.t=0;S.lock=1;next()}
+  }
+  if(!S.auto){
+   if((S.ph==="story"||S.ph.startsWith("twist"))&&S.age>=(bank.CINEND[S.ph]||38)+4)next();
+   else if(isShow(S.ph)&&S.age>=reviewDuration(S.ph))next();
+   else if(S.ph==="win"){
+    S.wn=Math.max(S.wn,Math.min(3,Math.floor(S.age/14)));
+    if(S.age>=75)next();
+   }
+  }
+  if(isShow(S.ph)&&!S.auto){const n=reviewEntries(S.ph).length;S.shown=Math.min(Math.max(0,n-1),Math.floor(S.age/reviewStep(S.ph)))}
  }
- push()}
+ push();
+}
 setInterval(tick,1000);
 
 function snap(c){
- const g={build:BUILD,serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
+ const g={build:BUILD,serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,reviewDuration:isShow(S.ph)?reviewDuration(S.ph):75,event4:S.event4,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
  if(S.ph==="win")g.W=winners();
  const all=c.role==="a"||c.role==="c"||c.role==="v"||c.role==="s",subs=all;
- if(c.sv!==S.sv||c.sh!==(c.role==="s"?S.ph:subs)){g.sub=subs?(c.role==="s"?(/^show[2-5]?$/.test(S.ph)?S.sub.filter(x=>x.r==="r"+(S.ph==="show"?"1":S.ph.slice(4))):[]):S.sub):[];c.sv=S.sv;c.sh=c.role==="s"?S.ph:subs}
- if(c.role==="p"){const p=S.pl.find(x=>x.id===c.id);g.me=p?{st:p.st,trk:p.t,name:p.n,sent:p.sent,kickUntil:p.kickUntil||0}:null}
+ if(c.sv!==S.sv||c.sh!==(c.role==="s"?S.ph:subs)){g.sub=subs?(c.role==="s"?(isShow(S.ph)?reviewEntries(S.ph):[]):S.sub):[];c.sv=S.sv;c.sh=c.role==="s"?S.ph:subs}
+ if(c.role==="p"){const p=S.pl.find(x=>x.id===c.id);g.me=p?{st:p.st,trk:p.t,name:p.n,sent:p.sent,kickUntil:p.kickUntil||0,r4Ack:!!p.r4Ack,pre4:p.pre4||null}:null}
  if(c.role==="c")g.my=S.my[c.id]||{};
  if(c.role==="s"||c.role==="v")g.codes={TC:bank.TC};
  if(c.role==="a"){g.people=inn().map(p=>({id:p.id,n:p.n,t:p.t}));g.codes={TC:bank.TC,CC:bank.CC};g.pend=S.pl.filter(p=>p.st==="wait").map(p=>({id:p.id,n:p.n,t:p.t}));g.rc=Object.values(S.cr).reduce((a,o)=>a+Object.keys(o).length,0)}
@@ -107,6 +128,12 @@ http.createServer(async(q,r)=>{
   S.pl.push({id,n,t,st,device,sent:{},online:false,last:Date.now()});push();return send(r,{role:"p",id,trk:t,name:n,st})}
  if(P==="/api/ping"){const p=S.pl.find(x=>x.id===b.id&&x.st==="in");if(!p){const k=S.pl.find(x=>x.id===b.id);return send(r,{err:"inactive",kickUntil:k?.kickUntil||0,previousName:k?.st==="kicked"?k.n:""},403)}p.last=Date.now();p.online=true;return send(r,{ok:1})}
  if(P==="/api/leave"){const p=S.pl.find(x=>x.id===b.id);if(p){p.online=false;if(!b.temporary)p.st="left";push()}return send(r,{ok:1})}
+ if(P==="/api/ack-r4"){
+  const p=S.pl.find(x=>x.id===b.id&&x.st==="in");
+  if(!p||S.ph!=="r4"||!S.event4)return send(r,{err:"העדכון עדיין לא התקבל."},409);
+  p.r4Ack=true;if(p.sent.r4==="holding")delete p.sent.r4;
+  push();return send(r,{ok:1});
+ }
  if(P==="/api/sub"){
   const p=S.pl.find(x=>x.id===b.id);
   if(!p||p.st!=="in"||!p.online||Date.now()-p.last>13000||!isR(S.ph)||S.lock||p.sent[S.ph])return send(r,{err:"לא ניתן לשלוח עכשיו."});
@@ -115,7 +142,11 @@ http.createServer(async(q,r)=>{
   // Journalism and networks require two texts. Spokespeople submit exactly one.
   if(p.t==="s"&&a.length!==1)return send(r,{err:"בדוברות מגישים תוצר אחד בלבד: תגובה לכתב או SMS."},400);
   if(p.t!=="s"&&a.length!==2)return send(r,{err:"יש למלא את שני השדות."},400);
-  if(p.t==="s"&&S.ph==="r4"&&a[0].length>320)return send(r,{err:"SMS מבצעי חייב להיות קצר (עד 320 תווים)."},400);
+  if(p.t==="s"&&(S.ph==="r4"||S.ph==="r6")&&a[0].length>320)return send(r,{err:"SMS מבצעי חייב להיות קצר (עד 320 תווים)."},400);
+  if(S.ph==="r4"){
+   if(!S.event4){p.pre4=a;p.sent.r4="holding";push();return send(r,{ok:1,pending:1})}
+   if(!p.r4Ack)return send(r,{err:"קודם יש לאשר את עדכון החמ״ל."},409);
+  }
   addSub({t:p.t,r:S.ph,a,by:p.n});p.sent[S.ph]=1;push();return send(r,{ok:1})}
  if(P==="/api/rate"){
   const n=Math.round(+b.n),sid=+b.sid;
