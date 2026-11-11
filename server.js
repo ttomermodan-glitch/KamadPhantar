@@ -4,12 +4,44 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const BUILD = '2026.11.11-pitch.1';
+const BUILD = '2026.11.11-pitch.2-music';
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'kamadP';
 const COMMAND_CODE = '18608';
 const TEST3 = '67420', TEST4 = '67421';
 const KICK_MS = 20_000, ONLINE_MS = 16_000;
+// All MP3 files under public/music are discovered by name, no manual playlist edits.
+// While the folder is empty, keep the three older files in public/ working.
+const PUBLIC_DIR = path.join(__dirname,'public');
+const MUSIC_DIR = path.join(PUBLIC_DIR,'music');
+const LEGACY_SONGS = ['Hakpaza.mp3','Hapaza2.mp3','Hapaza3.mp3'];
+function musicFiles(){
+ let files=[];
+ try {files=fs.readdirSync(MUSIC_DIR,{withFileTypes:true}).filter(x=>x.isFile()&&/\.mp3$/i.test(x.name)&&!x.name.startsWith('.')).map(x=>x.name)}
+ catch(e){if(e.code!=='ENOENT')console.warn('Music directory unavailable:',e.message)}
+ files.sort((a,b)=>a.localeCompare(b,'he',{numeric:true,sensitivity:'base'}));
+ if(files.length)return {source:'music',tracks:files.map(name=>({name,url:'/music/'+encodeURIComponent(name)}))};
+ const legacy=LEGACY_SONGS.filter(name=>{try{return fs.statSync(path.join(PUBLIC_DIR,name)).isFile()}catch{return false}});
+ return {source:legacy.length?'legacy':'none',tracks:legacy.map(name=>({name,url:'/'+encodeURIComponent(name)}))};
+}
+function serveMp3(req,res,file){
+ let st;try{st=fs.statSync(file)}catch{return bad(res,'קובץ המוזיקה לא נמצא',404)}
+ if(!st.isFile())return bad(res,'קובץ המוזיקה לא נמצא',404);
+ const size=st.size;let start=0,end=size-1,status=200;
+ const headers={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','Cache-Control':'public, max-age=600','X-Content-Type-Options':'nosniff'};
+ const range=req.headers.range;
+ if(range){
+  const m=/^bytes=(\d*)-(\d*)$/.exec(range);
+  if(!m||(!m[1]&&!m[2])){res.writeHead(416,{'Content-Range':`bytes */${size}`});return res.end()}
+  if(!m[1]){const n=Number(m[2]);start=Math.max(0,size-n);end=size-1}
+  else {start=Number(m[1]);end=m[2]?Math.min(Number(m[2]),size-1):size-1}
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=size){res.writeHead(416,{'Content-Range':`bytes */${size}`});return res.end()}
+  status=206;headers['Content-Range']=`bytes ${start}-${end}/${size}`;
+ }
+ headers['Content-Length']=end-start+1;res.writeHead(status,headers);
+ return req.method==='HEAD'?res.end():fs.createReadStream(file,{start,end}).pipe(res);
+}
+
 const ROUNDS = [
   {name:'תמכרו לי את זה',tag:'מוצר מיותר לקמ״ד',prompt:'המציאו מוצר שאף אחד לא ביקש, אבל איכשהו הוא נשמע כמו הדבר שהקמ״ד הכי צריך. מכרו אותו ברצינות מוחלטת.',hint:'שם, בעיה שהוא פותר, מחיר חסר היגיון וסלוגן שאי אפשר לשכוח.',detail:'חפשו משהו קטן ומוכר מהיומיום בקורס, ותנו לו פתרון מוגזם להחריד.'},
   {name:'הבעיה שלא הייתה קיימת',tag:'קודם ממציאים בעיה',prompt:'תמציאו בעיה דמיונית ומגוחכת שקיימת כביכול בקמ״ד. אחר כך תמכרו מוצר שמפתר אותה, אבל יוצר יותר בעיות ממה שהיו קודם.',hint:'הבעיה עצמה צריכה להיות משכנעת. הפתרון חייב להיות גרוע במיוחד.',detail:'ככל שהנציג נשמע בטוח בעצמו, כך הרעיון יכול להיות טיפשי יותר.'},
@@ -126,14 +158,13 @@ async function handle(req,res){
  const u=new URL(req.url,`http://${req.headers.host||'localhost'}`),endpoint=u.pathname;
  if(req.method==='GET'&&['/','/index.html'].includes(endpoint)){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});return res.end(fs.readFileSync(path.join(__dirname,'public','index.html')))}
  if(req.method==='GET'&&endpoint==='/join-qr.svg'){res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'public, max-age=600'});return res.end(fs.readFileSync(path.join(__dirname,'public','join-qr.svg')))}
- const filename=endpoint.slice(1);
- if(['GET','HEAD'].includes(req.method)&&['Hakpaza.mp3','Hapaza2.mp3','Hapaza3.mp3'].includes(filename)){
-  const p=path.join(__dirname,'public',filename);let st;try{st=fs.statSync(p)}catch{return bad(res,'קובץ המוזיקה עדיין לא הועלה',404)}
-  if(!st.isFile())return bad(res,'קובץ המוזיקה חסר',404);
-  const size=st.size;let start=0,end=size-1,status=200;const headers={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','Cache-Control':'public, max-age=600'};
-  const m=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range||'');if(m){if(m[1])start=Number(m[1]);if(m[2])end=Number(m[2]);if(!m[1]&&m[2]){start=Math.max(0,size-Number(m[2]));end=size-1}end=Math.min(end,size-1);if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=size){res.writeHead(416,{'Content-Range':`bytes */${size}`});return res.end()}status=206;headers['Content-Range']=`bytes ${start}-${end}/${size}`}
-  headers['Content-Length']=end-start+1;res.writeHead(status,headers);return req.method==='HEAD'?res.end():fs.createReadStream(p,{start,end}).pipe(res);
+ if(req.method==='GET'&&endpoint==='/api/playlist')return json(res,200,musicFiles());
+ if(['GET','HEAD'].includes(req.method)&&endpoint.startsWith('/music/')){
+  let name;try{name=decodeURIComponent(endpoint.slice('/music/'.length))}catch{return bad(res,'שם קובץ לא תקין',400)}
+  if(!name||name.startsWith('.')||!/^.{1,200}\.mp3$/i.test(name)||name.includes('/')||name.includes('\\')||name.includes('\0'))return bad(res,'שם קובץ לא תקין',400);
+  return serveMp3(req,res,path.join(MUSIC_DIR,name));
  }
+ if(['GET','HEAD'].includes(req.method)&&LEGACY_SONGS.includes(endpoint.slice(1)))return serveMp3(req,res,path.join(PUBLIC_DIR,endpoint.slice(1)));
  if(req.method==='GET'&&endpoint==='/api/health')return json(res,200,{ok:true,build:BUILD,phase:phase()});
  if(req.method==='GET'&&endpoint==='/api/stream'){
   const token=u.searchParams.get('token'),s=sessionFor(token);if(!s||s.kicked)return bad(res,'גישה נדחתה',401);
