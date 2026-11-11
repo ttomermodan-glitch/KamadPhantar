@@ -28,10 +28,11 @@
 <body><div id="app"></div><div id="toast" class="toast" aria-live="polite"></div><audio id="music" preload="none"></audio>
 <script>
 'use strict';
-const BUILD='2026.11.11-pitch.1',COLORS=['#7fcdf0','#f7bc66','#c8a8ff'],SONGS=['Hakpaza.mp3','Hapaza2.mp3','Hapaza3.mp3'];
+const BUILD='2026.11.11-pitch.2-music',COLORS=['#7fcdf0','#f7bc66','#c8a8ff'];
+let SONGS=[];
 const el=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,ch=>'&#'+ch.charCodeAt(0)+';'),c=g=>COLORS[(g-1+3)%3],fmt=n=>String(Math.floor(Math.max(0,n)/60)).padStart(2,'0')+':'+String(Math.max(0,n)%60).padStart(2,'0'),round=x=>Math.max(0,(x?.round||1)-1),fscore=x=>x===undefined||x===null?'—':Number(x).toFixed(2),money=x=>String(x||'לא צוין');
 let token=sessionStorage.getItem('pitch_token')||'',role='',S=null,es=null,key='',busy=false,login={code:'',name:''},password='',toastHandle=null,drafts={},judgeDrafts={},questionDraft='',seedDraft='',cooldownUntil=0,previousName='',previewRound=0,previewStage='write';
-let soundEnabled=false,soundMuted=false,track=0,fade=null,fadeDone=false,blocked=false,musicError='';
+let soundEnabled=false,soundMuted=false,track=0,fade=null,fadeDone=false,blocked=false,musicError='',playlistSource='none';
 const audio=el('music');
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastHandle);toastHandle=setTimeout(()=>t.classList.remove('show'),3500)}
 async function api(name,data={},auth=true){let r;try{r=await fetch('/api/'+name,{method:'POST',headers:{'Content-Type':'application/json',...(auth?{'x-session':token}:{})},body:JSON.stringify(data)})}catch{throw new Error('אין חיבור לשרת')};const j=await r.json().catch(()=>({error:'תגובה לא תקינה'}));if(!r.ok){const err=new Error(j.error||'הפעולה נכשלה');err.info=j;err.status=r.status;throw err}return j}
@@ -41,18 +42,54 @@ function onRevoked(e){let x={};try{x=JSON.parse(e.data)}catch{}cooldownUntil=x.k
 function isPresentation(){return location.hash==='#presentation'}
 function primaryScreen(){return role==='screen'&&!isPresentation()}
 function musicLive(){return primaryScreen()&&S&&['intro','write1','write2','write3'].includes(S.phase)&&!S.paused&&S.remaining>0}
-function loadTrack(i){track=(i+3)%3;audio.src='/'+SONGS[track];audio.load();musicStatus()}
+async function refreshPlaylist(){
+ try{
+  const res=await fetch('/api/playlist',{cache:'no-store'});
+  if(!res.ok)throw Error('לא ניתן לקרוא את תיקיית המוזיקה');
+  const data=await res.json(),next=Array.isArray(data.tracks)?data.tracks.filter(x=>typeof x.name==='string'&&typeof x.url==='string'):[];
+  const current=SONGS[track]?.url;
+  SONGS=next;playlistSource=data.source||'none';
+  const found=SONGS.findIndex(x=>x.url===current);
+  if(found>=0)track=found;
+  else {track=0;stopFade();fadeDone=false;audio.pause();audio.removeAttribute('src');audio.load()}
+  musicError=SONGS.length?'':'אין שירים בפלייליסט. הוסיפו קובצי MP3 לתיקיית public/music.';
+  musicStatus();
+  return SONGS.length;
+ }catch(e){musicError=e.message||'שגיאה בטעינת הפלייליסט';musicStatus();return 0}
+}
+function loadTrack(i){if(!SONGS.length){musicStatus();return false}track=(i+SONGS.length)%SONGS.length;audio.src=SONGS[track].url;audio.load();musicStatus();return true}
 function stopFade(){if(fade)clearInterval(fade);fade=null}
 function fadeStart(){if(fadeDone||track!==0)return;fadeDone=true;stopFade();audio.volume=.72;const t=Date.now();fade=setInterval(()=>{const p=Math.min(1,(Date.now()-t)/7000);audio.volume=.72+(.10-.72)*p;if(p===1)stopFade()},150)}
-function syncMusic(){if(!primaryScreen()){audio.pause();return}if(!musicLive()||!soundEnabled){audio.pause();musicStatus();return}if(!audio.src||!audio.src.includes(SONGS[track]))loadTrack(track);if(track!==0||fadeDone)audio.volume=.10;if(audio.paused)audio.play().then(()=>{if(track===0&&!fadeDone)fadeStart();blocked=false;musicStatus()}).catch(()=>{blocked=true;musicStatus()})}
-function toggleSound(){if(!soundEnabled){soundEnabled=true;blocked=false;musicError='';if(!audio.src)loadTrack(0);const p=audio.play();p?.then(()=>{if(!musicLive())audio.pause();else if(track===0&&!fadeDone)fadeStart();musicStatus()}).catch(()=>{blocked=true;musicStatus()})}else{soundEnabled=false;audio.pause();stopFade();musicStatus()}}
-function nextTrack(){stopFade();loadTrack(track+1);audio.volume=.10;syncMusic()}
+function syncMusic(){
+ if(!primaryScreen()){audio.pause();return}
+ if(!musicLive()||!soundEnabled||!SONGS.length){audio.pause();musicStatus();return}
+ if(!audio.src||!audio.src.endsWith(SONGS[track].url))loadTrack(track);
+ if(track!==0||fadeDone)audio.volume=.10;
+ if(audio.paused)audio.play().then(()=>{if(track===0&&!fadeDone)fadeStart();blocked=false;musicStatus()}).catch(()=>{blocked=true;musicStatus()});
+}
+async function toggleSound(){
+ if(soundEnabled){soundEnabled=false;audio.pause();stopFade();musicStatus();return}
+ // The initial playlist is loaded when the projector opens; refresh if it was empty.
+ if(!SONGS.length)await refreshPlaylist();
+ if(!SONGS.length){musicStatus();return}
+ soundEnabled=true;blocked=false;musicError='';
+ if(!audio.src)loadTrack(track);
+ const p=audio.play();
+ p?.then(()=>{if(!musicLive())audio.pause();else if(track===0&&!fadeDone)fadeStart();musicStatus()}).catch(()=>{blocked=true;musicStatus()});
+}
+function nextTrack(){if(!SONGS.length){musicStatus();return}stopFade();loadTrack(track+1);audio.volume=.10;syncMusic()}
 function muteSound(){soundMuted=!soundMuted;audio.muted=soundMuted;musicStatus()}
 audio.addEventListener('ended',()=>{if(musicLive()&&soundEnabled)nextTrack()});
-audio.addEventListener('error',()=>{if(!soundEnabled)return;musicError='לא ניתן לנגן את '+SONGS[track]+'. בדקו שהקובץ נמצא בתיקיית public.';soundEnabled=false;musicStatus()});
-function musicStatus(){const l=el('sound-line'),a=el('sound-toggle'),b=el('sound-mute');if(l)l.textContent=musicError||('♫ '+SONGS[track]+' · '+(musicLive()?(soundEnabled?(blocked?'לחצו שוב כדי לאפשר שמע':'מוכן לניגון'):'לחצו להפעלת שמע'):'מושהה בזמן הצגה, הצבעה ותוצאות'));if(a)a.textContent=soundEnabled?'עצור מוזיקה':'הפעל מוזיקה';if(b)b.textContent=soundMuted?'בטל השתקה':'השתק'}
-function musicUI(){return `<aside class="sound-desk"><strong>♫ פלייליסט מסך ההקרנה</strong><div class="buttons"><button class="btn sm" onclick="toggleSound()" id="sound-toggle">הפעל מוזיקה</button><button class="btn sm" onclick="nextTrack()">השיר הבא</button><button class="btn sm" onclick="muteSound()" id="sound-mute">השתק</button></div><div id="sound-line">Hakpaza → Hapaza2 → Hapaza3</div></aside>`}
-async function init(){if(location.hash==='#screen'||isPresentation()){const x=await api('screen',{},false).catch(e=>{toast(e.message);return null});if(x)setAuth(x);return}if(token){const x=await api('resume',{token}).catch(()=>null);if(x){setAuth(x);return}logout()}render()}
+audio.addEventListener('error',()=>{if(!soundEnabled)return;const badName=SONGS[track]?.name||'שיר';musicError='לא ניתן לנגן את '+badName+'. בדקו שהקובץ תקין.';soundEnabled=false;musicStatus()});
+function musicStatus(){
+ const l=el('sound-line'),a=el('sound-toggle'),b=el('sound-mute'),n=el('sound-count');
+ if(l)l.textContent=musicError||('♫ '+(SONGS[track]?.name||'אין קבצים')+' · '+(musicLive()?(soundEnabled?(blocked?'לחצו שוב כדי לאפשר שמע':'מתנגן / מוכן לניגון'):'לחצו להפעלת שמע'):'מושהה בזמן הצגה, הצבעה ותוצאות'));
+ if(n)n.textContent=SONGS.length+' שירים · '+(playlistSource==='music'?'public/music':playlistSource==='legacy'?'public (ישן)':'אין תיקיית מוזיקה פעילה');
+ if(a)a.textContent=soundEnabled?'עצור מוזיקה':'הפעל מוזיקה';
+ if(b)b.textContent=soundMuted?'בטל השתקה':'השתק';
+}
+function musicUI(){return `<aside class="sound-desk"><strong>♫ פלייליסט מסך ההקרנה</strong><div class="buttons"><button class="btn sm" onclick="toggleSound()" id="sound-toggle">הפעל מוזיקה</button><button class="btn sm" onclick="nextTrack()">השיר הבא</button><button class="btn sm" onclick="muteSound()" id="sound-mute">השתק</button><button class="btn sm" onclick="refreshPlaylist().then(syncMusic)">רענן שירים</button></div><div id="sound-count" class="tiny muted"></div><div id="sound-line"></div></aside>`}
+async function init(){if(location.hash==='#screen'||isPresentation()){const x=await api('screen',{},false).catch(e=>{toast(e.message);return null});if(x){setAuth(x);refreshPlaylist().then(syncMusic)}return}if(token){const x=await api('resume',{token}).catch(()=>null);if(x){setAuth(x);return}logout()}render()}
 function connect(){es?.close();render();es=new EventSource('/api/stream?token='+encodeURIComponent(token));es.addEventListener('state',ev=>{try{const s=JSON.parse(ev.data),k=renderKey(s);S=s;syncMusic();if(k!==key){key=k;render()}else clockUI()}catch(e){console.warn(e)}});es.addEventListener('revoked',onRevoked);es.onerror=()=>{const n=el('net');if(n)n.textContent='מתחבר מחדש...'}}
 function renderKey(s){let k=role+'|'+s.phase+'|'+s.paused+'|'+(s.remaining===0?'done':'on');if(role==='admin')return k+'|'+s.version;if(role==='screen')return k+'|'+(s.phase==='lobby'||s.phase.startsWith('pitch')||s.phase.startsWith('results')||s.phase==='finale'?s.version:0)+'|'+isPresentation();if(role==='player')return k+'|'+s.myGroup+'|'+(s.mySubmission?.updatedAt||0)+'|'+JSON.stringify(s.myVotes||{})+'|'+(s.presentation?.question||'');if(role==='judge')return k+'|'+JSON.stringify(s.myRatings||{})+'|'+s.presentationGroup+'|'+s.seedCount;if(role==='preview')return k+'|'+previewRound+'|'+previewStage;return k}
 function header(){return `<header class="topbar"><div class="brand"><b>NEWS</b>404 <span class="subbrand">${S?.started?'הקפצה! · קרב המכירות':'פעילות מחלקה'}</span></div><div class="trow"><span class="tag" id="net">● ${S?'מחוברים':'מתחברים...'}</span>${role&&role!=='screen'?`<button class="btn sm ghost" onclick="logout()">יציאה</button>`:''}</div></header>`}
