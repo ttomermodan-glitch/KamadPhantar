@@ -1,9 +1,0 @@
-{
-  "name": "kamad-hakpatza-concepts",
-  "version": "1.0.0",
-  "private": true,
-  "description": "הקפצה! תחרות קונספטים לקמ״ד בשלוש קבוצות, 25 דקות",
-  "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" }
-}
