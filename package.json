@@ -1,0 +1,9 @@
+{
+  "name": "news404-kamad-pitch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kamad Hakpatza pitch challenge: 3 rounds, judges, projector, 25 minutes",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
