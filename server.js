@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const BUILD = '2026.11.11-concepts.4';
+const BUILD = '2026.11.11-concepts.5';
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'kamadP';
 const COMMAND_CODE = '18608';
@@ -98,6 +98,15 @@ function adminAction(action,data){switch(action){
  case 'approve':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s||s.kicked)return false;s.approved=true;bump();return true}
  case 'reject':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s)return false;destroySession(s);return true}
  case 'kick':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s)return false;deviceLocks.set(s.device,{until:Date.now()+KICK_MS,name:s.name});destroySession(s);return true}
+ case 'deleteConcept':{
+  const r=Number(data.round),g=Number(data.group);
+  if(!Number.isInteger(r)||r<0||r>2||!Number.isInteger(g)||g<1||g>3||!game.submissions[r][g])return false;
+  delete game.submissions[r][g];
+  // Never leave votes or judge scores counting a deleted concept.
+  for(const ballot of Object.values(game.votes[r]))delete ballot.scores[g];
+  for(const ballot of Object.values(game.ratings[r]))delete ballot.scores[g];
+  bump();return true;
+ }
  default:return false;
 }}
 async function handle(req,res){const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);const endpoint=u.pathname;
@@ -173,6 +182,9 @@ async function handle(req,res){const u=new URL(req.url,`http://${req.headers.hos
   const r=roundIndex();if(phase()!==`write${r+1}`||remaining()<=0||game.paused)return bad(res,'חלון ההגשה סגור');
   const title=String(body.title||'').trim().slice(0,90),description=String(body.description||'').trim().slice(0,520);
   if(title.length<3||description.length<12)return bad(res,'צריך שם לקונספט והסבר של לפחות 12 תווים');
+  // Exactly one submission per group and round. The first accepted request wins;
+  // later requests cannot replace it, even from a stale browser or simultaneous taps.
+  if(game.submissions[r][s.group])return bad(res,'הקבוצה כבר הגישה קונספט. רק המנהל יכול למחוק ולפתוח הגשה חדשה.',409);
   game.submissions[r][s.group]={title,description,author:s.name,group:s.group,updatedAt:Date.now()};bump();pushAll();return json(res,200,{ok:true});
  }
  if(endpoint==='/api/vote'){
