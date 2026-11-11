@@ -1,157 +1,197 @@
 "use strict";
-// Case-study game server. Zero dependencies. Run: node server.js
-const http=require("http"),fs=require("fs"),path=require("path"),crypto=require("crypto");
-const bank=JSON.parse(fs.readFileSync(path.join(__dirname,"bank.json"),"utf8"));
-const PORT=process.env.PORT||3000,PW=process.env.ADMIN_PASSWORD||"kamadP";
-const BUILD="2026.11.07-v7.0",TK=["j","s","n"],PHS=["lobby","story","r1","show","twist","r2","show2","twist3","r3","show3","twist4","r4","show4","twist5","r5","show5","twist6","r6","show6","win","thanks"],RL=bank.RL;
-const showRound=ph=>"r"+(ph==="show"?"1":ph.slice(4));
-const isShow=ph=>/^show[2-6]?$/.test(ph);
-const reviewEntries=ph=>S.sub.filter(x=>x.r===showRound(ph));
-const reviewDuration=ph=>Math.max(75,reviewEntries(ph).length*8);
-const reviewStep=ph=>Math.max(1,Math.floor(reviewDuration(ph)/Math.max(1,reviewEntries(ph).length)));
-const isR=p=>/^r[1-6]$/.test(p),rr=()=>1+Math.floor(Math.random()*5),pick=a=>a[Math.floor(Math.random()*a.length)];
-const sha=s=>crypto.createHash("sha256").update(String(s)).digest();
-const toks=new Set(),viewToks=new Set(),cl=new Map(),kickRestrictions=new Map();
-const TEST3="67420",TEST4="67421",KICK_MS=20000;
-const fresh=(demo,pl)=>({ph:"lobby",t:RL,pause:0,lock:0,fl:0,shown:0,wn:0,age:0,locked:0,demo:demo||0,auto:0,rw:0,bi:0,event4:0,pl:pl||[],cm:{},my:{},sub:[],cr:{},sid:0,sv:1});
-let S=fresh();
+/* NEWS404 / KAMAD concepts: synchronized, zero-dependency classroom game. */
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
 
-function setPh(p){S.ph=p;S.age=0;S.fl=0;S.lock=0;S.t=RL;S.bi=0;S.pause=0;S.shown=0;S.rw=0;
- if(p==="r4"){S.event4=0;S.pl.forEach(x=>{x.r4Ack=false;x.pre4=null;delete x.sent.r4})}
- if(p==="win")S.wn=0;
+const BUILD = '2026.11.11-concepts.4';
+const PORT = Number(process.env.PORT || 3000);
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'kamadP';
+const COMMAND_CODE = '18608';
+const TEST3 = '67420', TEST4 = '67421';
+const KICK_MS = 20_000;
+const ONLINE_MS = 11_000;
+const DURATIONS = [60,300,75,60,15,300,75,60,15,300,75,60,15,90];
+const PHASES = ['intro','write1','reveal1','vote1','results1','write2','reveal2','vote2','results2','write3','reveal3','vote3','results3','finale'];
+const CONCEPTS = [
+ {title:'המוצר שלא ידענו שאנחנו צריכים',short:'מוצר לקמ״ד',prompt:'המציאו מוצר שפותר בעיה שכולם מכירים בקמ״ד, בדרך הכי מופרכת שאפשר. תנו לו שם והסבירו מה הוא עושה ולמה חייבים אותו.',hint:'הסגל והקהל יחפשו מקוריות, רעיון ברור, והכי חשוב: משהו שבאמת מצחיק.'},
+ {title:'הריאליטי שאף ערוץ לא יעז לשדר',short:'ריאליטי בקמ״ד',prompt:'המציאו תוכנית ריאליטי שמתרחשת בקמ״ד. מה הפורמט שלה, מה עושים המשתתפים ומה גורם לצופים להמשיך לראות?',hint:'לא צריך להפיק סרטון. ממציאים רעיון ומנסחים אותו בצורה שמישהו יכול להבין מיד.'},
+ {title:'ההקפצה שאף אחד לא ביקש',short:'הקפצת הסיום',prompt:'המציאו את ההקפצה הכי אבסורדית שאפשר להעלות על הדעת בקמ״ד. תנו לה שם ותארו מה קורה בה. זו המצאה קומית בלבד, לא משהו שמבצעים באמת.',hint:'לכו רחוק עם הרעיון, אבל בלי בדיחות על אדם מסוים ובלי להעמיד פנים שמדובר באירוע חירום אמיתי.'}
+];
+const GROUP_COLORS = ['#5dbaf2','#e9ac54','#c393fc'];
+const sessions = new Map(), connections = new Map(), deviceLocks = new Map();
+const secret = () => crypto.randomBytes(24).toString('hex');
+const shuffle = arr => {const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=crypto.randomInt(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const generateCode = () => {let x;do{x=String(crypto.randomInt(10000,99999))}while([COMMAND_CODE,TEST3,TEST4].includes(x));return x};
+function fresh(){return {code:generateCode(),phaseIndex:-1,started:false,paused:false,deadline:0,remaining:0,locked:false,submissions:[{},{},{}],slots:[[],[],[]],votes:[{},{},{}],ratings:[{},{},{}],version:1,resetAt:Date.now()}}
+let game = fresh();
+function phase(){return game.phaseIndex<0?'lobby':PHASES[game.phaseIndex]||'finale'}
+function roundIndex(){const m=phase().match(/[123]$/);return m?Number(m[0])-1:phase()==='finale'?2:-1}
+function duration(){return game.phaseIndex<0?0:DURATIONS[game.phaseIndex]}
+function remaining(){return game.phaseIndex<0?0:game.paused?game.remaining:Math.max(0,Math.ceil((game.deadline-Date.now())/1000))}
+function bump(){game.version++}
+function advance(){if(game.phaseIndex===PHASES.length-1)return;
+ game.phaseIndex++;game.paused=false;game.remaining=DURATIONS[game.phaseIndex];game.deadline=Date.now()+game.remaining*1000;
+ const p=phase();const m=p.match(/^reveal([123])$/);
+ if(m){const r=Number(m[1])-1;game.slots[r]=shuffle([1,2,3]);}
+ bump();pushAll();}
+function start(){if(game.started)return false;game.started=true;advance();return true}
+// Manual stage progression: the timer stops at 00:00 and only the admin can advance.
+function tick(){pushAll()}
+const interval=setInterval(tick,1000);interval.unref?.();
+function sessionFor(token){return typeof token==='string'?sessions.get(token):null}
+function alive(s){return s&&!s.kicked&&s.approved&&Date.now()-s.lastSeen<ONLINE_MS}
+function activePlayers(){return [...sessions.values()].filter(s=>s.role==='player'&&alive(s))}
+function roster(){return activePlayers().map(s=>({id:s.id,name:s.name,group:s.group})).sort((a,b)=>a.group-b.group||a.name.localeCompare(b.name,'he'))}
+function groupCounts(){return [1,2,3].map(g=>activePlayers().filter(x=>x.group===g).length)}
+function assignGroup(){const counts=groupCounts(),min=Math.min(...counts),candidates=[1,2,3].filter(g=>counts[g-1]===min);return candidates[crypto.randomInt(candidates.length)]}
+function ensureSlots(r){return game.slots[r].length===3?game.slots[r]:[1,2,3]}
+const slotLabel = i => ['א','ב','ג'][i];
+function audienceScore(r,g){let sum=0,part=0;
+ for(const source of [1,2,3].filter(x=>x!==g)){
+  const votes=Object.entries(game.votes[r]).filter(([id,by])=>by.group===source&&by.scores[g]!==undefined).map(([,by])=>by.scores[g]);
+  if(votes.length){sum+=votes.reduce((a,b)=>a+b,0)/votes.length;part++}
+ }
+ return part?sum/part:null;
 }
-function next(){const i=PHS.indexOf(S.ph);if(i<PHS.length-1){S.locked=1;setPh(PHS[i+1])}}
-function addSub(x){x.id=++S.sid;S.sub.push(x);S.sv++;if(S.demo)S.cr[x.id]={_1:rr(),_2:rr()}}
-function bot(n){}
-function order(){const L=TK.map(t=>S.sub.filter(x=>x.t===t)),o=[];for(let i=0;i<Math.max(0,...L.map(l=>l.length));i++)L.forEach(l=>{if(l[i])o.push(l[i])});return o}
-function winners(){return TK.map(t=>{let b=null;S.sub.filter(x=>x.t===t).forEach(x=>{const v=Object.values(S.cr[x.id]||{});if(!v.length)return;const a=v.reduce((p,q)=>p+q,0)/v.length;if(!b||a>b.v||(a===b.v&&v.length>b.n))b={t,a:x.a,by:x.by,v:a,n:v.length}});return b})}
-const inn=()=>S.pl.filter(p=>p.st==="in"&&p.online&&Date.now()-p.last<10500);
-const np=()=>inn().length; // Only approved, connected players; commanders are never counted.
-const nc=()=>new Set([...cl.values()].filter(c=>c.role==="c").map(c=>c.id)).size;
-const ros=()=>inn().map(p=>({n:p.n,t:p.t}));
-
-function act(a,k){
- if(a==="nx")next();
- else if(a==="ps")S.pause=S.pause?0:1;
- else if(a==="cl"&&isR(S.ph)&&!S.lock){S.t=0;S.lock=1;bot(99);next()}
- else if(a==="tm"&&isR(S.ph)&&!S.lock)S.t+=30;
- else if(a==="tw"&&isR(S.ph)&&S.ph!=="r4")S.fl=1;
- else if(a==="sn"&&isShow(S.ph)){const n=reviewEntries(S.ph).length;if(n){S.shown=Math.min(S.shown+1,n-1);S.age=Math.min(reviewDuration(S.ph)-1,S.shown*reviewStep(S.ph))}}
- else if(a==="sa"&&isShow(S.ph)){S.shown=Math.max(0,reviewEntries(S.ph).length-1);S.age=reviewDuration(S.ph)-1}
- else if(a==="wn"&&S.ph==="win"){S.wn=Math.min(3,S.wn+1);S.age=0}
- else if(a==="ki"){const p=S.pl.find(x=>x.id===k&&x.st==="in");if(p){p.online=false;p.st="kicked";p.last=0;p.kickUntil=Date.now()+KICK_MS;if(p.device)kickRestrictions.set(p.device,{until:p.kickUntil,name:p.n});}}
- else if(a==="ok"||a==="no"){const p=S.pl.find(x=>x.id===k&&x.st==="wait");if(p){p.st=a==="ok"?"in":"no";if(p.st==="in"&&[...cl.values()].some(c=>c.role==="p"&&c.id===p.id)){p.online=true;p.last=Date.now()}}}
- else if(a==="lk")S.locked=S.locked?0:1;
- else if(a==="dm"){}
- else if(a==="au"){S.auto=S.auto?0:1;S.rw=0;S.pause=0}
- else if(a==="rs"){const o=S;S=fresh(o.demo,o.pl.filter(p=>p.st==="in"&&p.online).map(p=>({...p,sent:{}})));S.cm=o.cm}
- push()}
-
-let lastPresenceCheck=0;
-function tick(){
- const now=Date.now();
- if(now-lastPresenceCheck>=5000){lastPresenceCheck=now;for(const p of S.pl)if(p.online&&now-p.last>9500)p.online=false;}
- if(!S.pause){
-  if(S.ph!=="lobby")S.age++;
-  if(S.auto){
-   if(S.ph==="lobby")next();
-   else if(S.ph==="story"||S.ph.startsWith("twist")){if(S.age>=(bank.CINEND[S.ph]||38)+4)next()}
-   else if(isR(S.ph)&&!S.lock&&S.t>9)S.t=9;
-   else if(isShow(S.ph)){S.shown=Math.min(Math.max(0,reviewEntries(S.ph).length-1),S.shown+1);if(S.age>=Math.max(4,reviewEntries(S.ph).length+2))next()}
-   else if(S.ph==="win"){S.wn=Math.min(3,Math.floor(S.age/2));if(S.age>=9)next()}
-   else if(S.ph==="thanks")S.auto=0;
+function judgeScore(r,g){const a=Object.values(game.ratings[r]).map(v=>v.scores[g]?.score).filter(x=>x!==undefined);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
+function calc(r,g){if(!game.submissions[r][g])return {audience:null,judges:null,total:0,n:0};
+ const audience=audienceScore(r,g),judges=judgeScore(r,g);
+ const total=audience===null?(judges||0):judges===null?audience:judges*.7+audience*.3;
+ return {audience,judges,total:Number(total.toFixed(2)),n:Object.values(game.votes[r]).filter(x=>x.scores[g]!==undefined).length};}
+function ranking(){return [1,2,3].map(g=>({group:g,score:Number([0,1,2].reduce((t,r)=>t+calc(r,g).total,0).toFixed(2))})).sort((a,b)=>b.score-a.score||a.group-b.group)}
+function exposeJudges(r){return Object.values(game.ratings[r]).flatMap(j=>Object.entries(j.scores).map(([g,x])=>({name:j.name,group:Number(g),score:x.score,reason:x.reason}))) }
+function view(s){const p=phase(),r=roundIndex(),left=remaining();const base={build:BUILD,phase:p,round:r+1,remaining:left,duration:duration(),paused:game.paused,started:game.started,version:game.version,serverTime:Date.now(),concept:r>=0?CONCEPTS[r]:null,groups:groupCounts(),members:roster().map(({name,group})=>({name,group})),finished:game.phaseIndex===PHASES.length-1};
+ if(s.role==='admin'){base.code=game.code;base.locked=game.locked;base.roster=roster();base.pending=[...sessions.values()].filter(x=>x.role==='player'&&!x.approved&&!x.kicked).map(x=>({id:x.id,name:x.name,group:x.group}));base.submissions=game.submissions;base.slots=game.slots;base.ratings=game.ratings;base.votes=game.votes;base.ranking=ranking();base.judgesOnline=[...sessions.values()].filter(x=>x.role==='judge'&&alive(x)).length;}
+ if(s.role==='player'){base.myGroup=s.group;base.myName=s.name;base.approved=s.approved;base.mySubmission=r>=0?game.submissions[r][s.group]||null:null;base.myVotes=r>=0?game.votes[r][s.id]?.scores||{}:{};}
+ if(s.role==='judge'){base.myName=s.name;base.myRatings=r>=0?game.ratings[r][s.id]?.scores||{}:{};}
+ if(['admin','screen','judge','preview'].includes(s.role)){
+  base.slots=r>=0?ensureSlots(r):[1,2,3];
+  if(['reveal1','reveal2','reveal3','vote1','vote2','vote3','results1','results2','results3'].includes(p))base.display=base.slots.map((g,i)=>({slot:i,group:['admin','screen'].includes(s.role)&&p.startsWith('results')?g:null,submission:game.submissions[r][g]||null}));
+  if(p.startsWith('results')||p==='finale'){base.results=[0,1,2].map(k=>[1,2,3].map(g=>({group:g,...calc(k,g)})));base.ranking=ranking();base.judgeNotes=[0,1,2].flatMap(k=>exposeJudges(k).map(e=>({...e,round:k+1})));}
+  if(s.role==='preview'){
+   base.previewRound=CONCEPTS;base.previewSubmissions=game.submissions;base.previewSlots=game.slots;
   }
-  if(isR(S.ph)&&!S.lock){
-   // Day 20: a server-side, single global surprise exactly at 1:30 remaining.
-   // Grant extra 30 seconds once; individual players must acknowledge it.
-   if(S.ph==="r4"&&!S.event4&&S.t<=90){S.event4=1;S.t+=30;S.fl=1}
-   S.t--;
-   if(S.t<=0){S.t=0;S.lock=1;next()}
-  }
-  if(!S.auto){
-   if((S.ph==="story"||S.ph.startsWith("twist"))&&S.age>=(bank.CINEND[S.ph]||38)+4)next();
-   else if(isShow(S.ph)&&S.age>=reviewDuration(S.ph))next();
-   else if(S.ph==="win"){
-    S.wn=Math.max(S.wn,Math.min(3,Math.floor(S.age/14)));
-    if(S.age>=75)next();
+ }
+ if(s.role==='player'&&p.startsWith('vote'))base.ballot=ensureSlots(r).map((g,i)=>({slot:i,label:slotLabel(i),group:g===s.group?'self':null,submitted:!!game.submissions[r][g],myScore:game.votes[r][s.id]?.scores[g]??null}));
+ if(s.role==='judge'&&['reveal1','reveal2','reveal3','vote1','vote2','vote3'].includes(p))base.ballot=ensureSlots(r).map((g,i)=>({slot:i,label:slotLabel(i),group:g,submission:game.submissions[r][g]||null}));
+ if(s.role==='screen'&&p==='lobby')base.code=game.code;
+ if(s.role==='preview')base.mode=s.mode;
+ return base;
+}
+function json(res,code,obj){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(obj))}
+function readBody(req){return new Promise((resolve,reject)=>{let raw='';req.on('data',d=>{raw+=d;if(raw.length>100_000){reject(new Error('large body'));req.destroy()}});req.on('end',()=>{try{resolve(JSON.parse(raw||'{}'))}catch{reject(new Error('invalid JSON'))}});req.on('error',reject)})}
+function sendSnapshot(token,res){const s=sessionFor(token);if(!s||s.kicked){try{res.write(`event: revoked\ndata: ${JSON.stringify({error:'נותקת מהמשחק',kickUntil:s?.kickUntil||0,previousName:s?.name||''})}\n\n`)}catch{};res.end();return false}
+ const data=JSON.stringify(view(s));try{res.write(`event: state\ndata: ${data}\n\n`);return true}catch{return false}}
+function pushAll(){for(const [token,set] of connections){for(const res of set){if(!sendSnapshot(token,res))set.delete(res)}if(!set.size)connections.delete(token)}}
+function destroySession(s){if(s){s.kicked=true;s.kickUntil=Date.now()+KICK_MS;bump();pushAll()}}
+function checkAuth(req,body){return sessionFor(req.headers['x-session']||body?.token)}
+function bad(res,err,code=400,extra={}){json(res,code,{error:err,...extra})}
+function adminAction(action,data){switch(action){
+ case 'start':return start();
+ case 'next':if(game.started){advance();return true}return false;
+ case 'pause':if(!game.started)return false;if(game.paused){game.deadline=Date.now()+game.remaining*1000;game.paused=false}else{game.remaining=remaining();game.paused=true}bump();return true;
+ case 'add30':if(!game.started||phase()==='finale')return false;if(game.paused)game.remaining+=30;else game.deadline=Math.max(game.deadline,Date.now())+30_000;bump();return true;
+ case 'lock':game.locked=!game.locked;bump();return true;
+ case 'reset':game=fresh();bump();return true;
+ case 'approve':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s||s.kicked)return false;s.approved=true;bump();return true}
+ case 'reject':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s)return false;destroySession(s);return true}
+ case 'kick':{const s=[...sessions.values()].find(x=>x.id===data.id&&x.role==='player');if(!s)return false;deviceLocks.set(s.device,{until:Date.now()+KICK_MS,name:s.name});destroySession(s);return true}
+ default:return false;
+}}
+async function handle(req,res){const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);const endpoint=u.pathname;
+ if(req.method==='GET'&&['/','/index.html'].includes(endpoint)){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store, max-age=0','Pragma':'no-cache'});res.end(fs.readFileSync(path.join(__dirname,'public','index.html')));return}
+ if(req.method==='GET'&&endpoint==='/join-qr.svg'){res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'public, max-age=600'});return res.end(fs.readFileSync(path.join(__dirname,'public','join-qr.svg')))}
+ // Allow only the three named soundtrack files. Byte ranges support mobile audio streaming.
+ const filename=decodeURIComponent(endpoint.slice(1));
+ if(['GET','HEAD'].includes(req.method)&&['Hakpaza.mp3','Hapaza2.mp3','Hapaza3.mp3'].includes(filename)){
+  const audioPath=path.join(__dirname,'public',filename);
+  let st;try{st=fs.statSync(audioPath)}catch{return bad(res,'קובץ המוזיקה עדיין לא הועלה',404)}
+  if(!st.isFile())return bad(res,'קובץ המוזיקה חסר',404);
+  const size=st.size;let start=0,end=Math.max(0,size-1),status=200;
+  const hdr={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','Cache-Control':'public, max-age=600'};
+  const match=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range||'');
+  if(match){
+   if(match[1])start=Number(match[1]);
+   if(match[2])end=Number(match[2]);
+   if(!match[1]&&match[2]){start=Math.max(0,size-Number(match[2]));end=size-1}
+   end=Math.min(end,size-1);
+   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=size){
+    res.writeHead(416,{'Content-Range':`bytes */${size}`});return res.end();
    }
+   status=206;hdr['Content-Range']=`bytes ${start}-${end}/${size}`;
   }
-  if(isShow(S.ph)&&!S.auto){const n=reviewEntries(S.ph).length;S.shown=Math.min(Math.max(0,n-1),Math.floor(S.age/reviewStep(S.ph)))}
+  hdr['Content-Length']=end-start+1;
+  res.writeHead(status,hdr);
+  if(req.method==='HEAD')return res.end();
+  return fs.createReadStream(audioPath,{start,end}).pipe(res);
  }
- push();
+ if(req.method==='GET'&&endpoint==='/api/health'){return json(res,200,{ok:true,build:BUILD,phase:phase()})}
+ if(req.method==='GET'&&endpoint==='/api/stream'){
+  const token=u.searchParams.get('token'),s=sessionFor(token);if(!s||s.kicked)return bad(res,'גישה נדחתה',401);
+  res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store','Connection':'keep-alive','X-Accel-Buffering':'no'});
+  res.write(': connected\n\n');if(!connections.has(token))connections.set(token,new Set());connections.get(token).add(res);sendSnapshot(token,res);
+  req.on('close',()=>{connections.get(token)?.delete(res);if(!connections.get(token)?.size)connections.delete(token)});return;
+ }
+ if(req.method!=='POST'||!endpoint.startsWith('/api/'))return bad(res,'נתיב לא נמצא',404);
+ let body;try{body=await readBody(req)}catch{return bad(res,'בקשה לא תקינה',400)}
+ if(endpoint==='/api/login'){
+  if(String(body.password||'')!==ADMIN_PASSWORD)return bad(res,'סיסמה שגויה',401);
+  const token=secret(),s={id:token,role:'admin',name:'אדמין',lastSeen:Date.now(),approved:true};sessions.set(token,s);return json(res,200,{token,role:'admin'});
+ }
+ if(endpoint==='/api/screen'){const token=secret(),s={id:token,role:'screen',name:'מסך הקרנה',approved:true,lastSeen:Date.now()};sessions.set(token,s);return json(res,200,{token,role:'screen'})}
+ if(endpoint==='/api/join'){
+  const code=String(body.code||'').trim(),name=String(body.name||'').trim().slice(0,28),device=String(body.device||'').slice(0,90);
+  if(!name||name.length<2)return bad(res,'צריך להקליד שם של לפחות שני תווים');
+  if(!device||device.length<8)return bad(res,'מזהה מכשיר חסר');
+  const role=code===game.code?'player':code===COMMAND_CODE?'judge':[TEST3,TEST4].includes(code)?'preview':null;
+  if(!role)return bad(res,'קוד הכניסה שגוי',401);
+  const lock=deviceLocks.get(device);
+  if(lock&&role==='player'){
+   if(Date.now()<lock.until)return bad(res,'יש להמתין 20 שניות אחרי הוצאה',429,{kickUntil:lock.until,previousName:lock.name});
+   if(name.toLocaleLowerCase('he')===lock.name.toLocaleLowerCase('he'))return bad(res,'לאחר הוצאה צריך לבחור שם אחר',400,{previousName:lock.name});
+   deviceLocks.delete(device);
+  }
+  const existing=[...sessions.entries()].find(([,s])=>s.device===device&&s.role===role&&!s.kicked);
+  if(existing){existing[1].lastSeen=Date.now();return json(res,200,{token:existing[0],role,group:existing[1].group,approved:existing[1].approved,mode:existing[1].mode})}
+  if(game.locked&&role==='player')return bad(res,'הכניסה למשחק נעולה כרגע',403);
+  const token=secret(),s={id:token,role,name,device,lastSeen:Date.now(),approved:!game.started||role!=='player',group:role==='player'?assignGroup():null,kicked:false,mode:code===TEST3?3:code===TEST4?4:0};
+  sessions.set(token,s);bump();pushAll();return json(res,200,{token,role,group:s.group,approved:s.approved,mode:s.mode});
+ }
+ const s=checkAuth(req,body);if(!s||s.kicked)return bad(res,'החיבור אינו פעיל. יש להתחבר מחדש.',401,{kickUntil:s?.kickUntil||0,previousName:s?.name||''});
+ if(endpoint==='/api/resume'){s.lastSeen=Date.now();return json(res,200,{token:req.headers['x-session']||body.token,role:s.role,group:s.group,approved:s.approved,mode:s.mode})}
+ if(endpoint==='/api/heartbeat'){s.lastSeen=Date.now();return json(res,200,{ok:true})}
+ if(endpoint==='/api/state'){s.lastSeen=Date.now();return json(res,200,view(s))}
+ if(endpoint==='/api/leave'){s.lastSeen=0;bump();pushAll();return json(res,200,{ok:true})}
+ if(endpoint==='/api/admin'){
+  if(s.role!=='admin')return bad(res,'אין הרשאה',403);
+  if(!adminAction(body.action,body))return bad(res,'הפעולה אינה זמינה בשלב הזה');pushAll();return json(res,200,{ok:true});
+ }
+ if(endpoint==='/api/submit'){
+  if(s.role!=='player'||!s.approved)return bad(res,'אין הרשאה להגיש',403);
+  const r=roundIndex();if(phase()!==`write${r+1}`||remaining()<=0||game.paused)return bad(res,'חלון ההגשה סגור');
+  const title=String(body.title||'').trim().slice(0,90),description=String(body.description||'').trim().slice(0,520);
+  if(title.length<3||description.length<12)return bad(res,'צריך שם לקונספט והסבר של לפחות 12 תווים');
+  game.submissions[r][s.group]={title,description,author:s.name,group:s.group,updatedAt:Date.now()};bump();pushAll();return json(res,200,{ok:true});
+ }
+ if(endpoint==='/api/vote'){
+  if(s.role!=='player'||!s.approved)return bad(res,'אין הרשאה',403);
+  const r=roundIndex();if(phase()!==`vote${r+1}`||remaining()<=0)return bad(res,'ההצבעה הסתיימה');
+  const slot=Number(body.slot),score=Number(body.score),target=ensureSlots(r)[slot];
+  if(!Number.isInteger(slot)||slot<0||slot>2||!Number.isInteger(score)||score<1||score>5||target===s.group||!game.submissions[r][target])return bad(res,'לא ניתן לדרג את הכרטיסייה');
+  if(!game.votes[r][s.id])game.votes[r][s.id]={group:s.group,scores:{}};
+  game.votes[r][s.id].scores[target]=score;bump();pushAll();return json(res,200,{ok:true});
+ }
+ if(endpoint==='/api/rate'){
+  if(s.role!=='judge')return bad(res,'רק הסגל יכול להגיש דירוג מנומק',403);
+  const r=roundIndex();if(![`reveal${r+1}`,`vote${r+1}`].includes(phase())||remaining()<=0)return bad(res,'חלון דירוג הסגל סגור');
+  const slot=Number(body.slot),score=Number(body.score),reason=String(body.reason||'').trim().slice(0,220),target=ensureSlots(r)[slot];
+  if(!Number.isInteger(slot)||slot<0||slot>2||!Number.isInteger(score)||score<1||score>5||reason.length<4||!game.submissions[r][target])return bad(res,'צריך ציון מ־1 עד 5 ונימוק קצר לכל קונספט');
+  if(!game.ratings[r][s.id])game.ratings[r][s.id]={name:s.name,scores:{}};
+  game.ratings[r][s.id].scores[target]={score,reason};bump();pushAll();return json(res,200,{ok:true});
+ }
+ return bad(res,'נתיב לא נמצא',404);
 }
-setInterval(tick,1000);
-
-function snap(c){
- const g={build:BUILD,serverNow:Date.now(),ph:S.ph,t:S.t,pause:S.pause,lock:S.lock,fl:S.fl,shown:S.shown,reviewDuration:isShow(S.ph)?reviewDuration(S.ph):75,event4:S.event4,wn:S.wn,age:S.age,locked:S.locked,demo:S.demo,auto:S.auto,cn:S.sub.filter(x=>x.r===S.ph).length,np:np(),nc:nc(),ros:ros()};
- if(S.ph==="win")g.W=winners();
- const all=c.role==="a"||c.role==="c"||c.role==="v"||c.role==="s",subs=all;
- if(c.sv!==S.sv||c.sh!==(c.role==="s"?S.ph:subs)){g.sub=subs?(c.role==="s"?(isShow(S.ph)?reviewEntries(S.ph):[]):S.sub):[];c.sv=S.sv;c.sh=c.role==="s"?S.ph:subs}
- if(c.role==="p"){const p=S.pl.find(x=>x.id===c.id);g.me=p?{st:p.st,trk:p.t,name:p.n,sent:p.sent,kickUntil:p.kickUntil||0,r4Ack:!!p.r4Ack,pre4:p.pre4||null}:null}
- if(c.role==="c")g.my=S.my[c.id]||{};
- if(c.role==="s"||c.role==="v")g.codes={TC:bank.TC};
- if(c.role==="a"){g.people=inn().map(p=>({id:p.id,n:p.n,t:p.t}));g.codes={TC:bank.TC,CC:bank.CC};g.pend=S.pl.filter(p=>p.st==="wait").map(p=>({id:p.id,n:p.n,t:p.t}));g.rc=Object.values(S.cr).reduce((a,o)=>a+Object.keys(o).length,0)}
- return g}
-function push(){for(const c of cl.values())c.res.write("data:"+JSON.stringify(snap(c))+"\n\n")}
-
-const send=(r,o,code)=>{r.writeHead(code||200,{"Content-Type":"application/json; charset=utf-8"});r.end(JSON.stringify(o))};
-const body=q=>new Promise(ok=>{let d="";q.on("data",x=>{d+=x;if(d.length>20000)q.destroy()});q.on("end",()=>{try{const x=JSON.parse(d||"{}");ok(x&&typeof x==="object"&&!Array.isArray(x)?x:{})}catch(e){ok({})}})});
-
-http.createServer(async(q,r)=>{
- const u=new URL(q.url,"http://x"),P=u.pathname;
- if(q.method==="GET"&&(P==="/"||P==="/index.html")){r.writeHead(200,{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store, max-age=0","Pragma":"no-cache"});return r.end(fs.readFileSync(path.join(__dirname,"public","index.html")))}
- if(q.method==="GET"&&P==="/api/stream"){
-  const role=u.searchParams.get("role"),id=u.searchParams.get("id")||"",tok=u.searchParams.get("tok")||"";
-  if(!["a","p","c","s","v"].includes(role)||(role==="a"&&!toks.has(tok))||(role==="p"&&!S.pl.some(p=>p.id===id&&!["left","kicked","no"].includes(p.st)))||(role==="c"&&!S.cm[id])||(role==="v"&&!viewToks.has(id)))return send(r,{err:"no"},role==="a"?401:404);
-  r.writeHead(200,{"Content-Type":"text/event-stream","Cache-Control":"no-cache","Connection":"keep-alive","X-Accel-Buffering":"no"});
-  const c={res:r,role,id,sv:0,sh:null},k=crypto.randomUUID();cl.set(k,c);if(role==="p"){const p=S.pl.find(x=>x.id===id);if(p&&p.st==="in"){p.online=true;p.last=Date.now()}}
-  r.write("data:"+JSON.stringify(snap(c))+"\n\n");q.on("close",()=>{cl.delete(k);if(role==="p"){const p=S.pl.find(x=>x.id===id);if(p&&!Array.from(cl.values()).some(c=>c.role==="p"&&c.id===id)){p.last=Date.now();setTimeout(()=>{if(!Array.from(cl.values()).some(c=>c.role==="p"&&c.id===id)&&p.online&&Date.now()-p.last>=4500){p.online=false;push()}},4700)}}});push();return}
- if(q.method!=="POST")return send(r,{err:"not found"},404);
- const b=await body(q);
- if(P==="/api/login"){const ok=crypto.timingSafeEqual(sha(b.pw),sha(PW));if(!ok)return send(r,{err:"bad"},401);const t=crypto.randomUUID();toks.add(t);return send(r,{tok:t})}
- if(P==="/api/join"){
-  const c=String(b.code||"").trim(),n=String(b.name||"").trim().slice(0,20),device=String(b.device||"").slice(0,100);
-  if(c===TEST3||c===TEST4){const id=crypto.randomUUID();viewToks.add(id);return send(r,{role:"v",id,mode:c===TEST3?3:4});}
-  const restriction=kickRestrictions.get(device);
-  if(restriction){const remaining=Math.ceil((restriction.until-Date.now())/1000);if(remaining>0)return send(r,{err:`הכניסה תתאפשר בעוד ${remaining} שניות. לאחר מכן יש לבחור שם חדש.`,cooldown:restriction.until,previousName:restriction.name});if(n.trim().toLocaleLowerCase("he")===restriction.name.trim().toLocaleLowerCase("he"))return send(r,{err:"יש לבחור שם שונה מזה שהיה לפני ההוצאה.",previousName:restriction.name});kickRestrictions.delete(device);}
-  if(c===bank.CC){
-   // A device switching from player to commander must cease being a player immediately.
-   const old=S.pl.find(p=>p.id===String(b.previousPlayerId||""));
-   if(old){old.online=false;old.st="left"}
-   const id=crypto.randomUUID();S.cm[id]=n||"מפקד";push();return send(r,{role:"c",id,name:S.cm[id]})
-  }
-  const t=TK.find(k=>bank.TC[k]===c);
-  if(!t)return send(r,{err:"הקוד שגוי. בדקו את חמש הספרות."});
-  if(!n)return send(r,{err:"הזינו שם או כינוי."});
-  const returning=S.pl.some(p=>p.st==="kicked"&&p.t===t&&p.device===device&&device);
-  const id=crypto.randomUUID(),st=returning||S.ph==="lobby"&&!S.locked?"in":"wait";
-  S.pl.push({id,n,t,st,device,sent:{},online:false,last:Date.now()});push();return send(r,{role:"p",id,trk:t,name:n,st})}
- if(P==="/api/ping"){const p=S.pl.find(x=>x.id===b.id&&x.st==="in");if(!p){const k=S.pl.find(x=>x.id===b.id);return send(r,{err:"inactive",kickUntil:k?.kickUntil||0,previousName:k?.st==="kicked"?k.n:""},403)}p.last=Date.now();p.online=true;return send(r,{ok:1})}
- if(P==="/api/leave"){const p=S.pl.find(x=>x.id===b.id);if(p){p.online=false;if(!b.temporary)p.st="left";push()}return send(r,{ok:1})}
- if(P==="/api/ack-r4"){
-  const p=S.pl.find(x=>x.id===b.id&&x.st==="in");
-  if(!p||S.ph!=="r4"||!S.event4)return send(r,{err:"העדכון עדיין לא התקבל."},409);
-  p.r4Ack=true;if(p.sent.r4==="holding")delete p.sent.r4;
-  push();return send(r,{ok:1});
- }
- if(P==="/api/sub"){
-  const p=S.pl.find(x=>x.id===b.id);
-  if(!p||p.st!=="in"||!p.online||Date.now()-p.last>13000||!isR(S.ph)||S.lock||p.sent[S.ph])return send(r,{err:"לא ניתן לשלוח עכשיו."});
-  const a=(Array.isArray(b.a)?b.a:[]).map(x=>String(x).trim().slice(0,2600)).filter(Boolean).slice(0,2);
-  if(!a.length)return send(r,{err:"הטקסט ריק."});
-  // Journalism and networks require two texts. Spokespeople submit exactly one.
-  if(p.t==="s"&&a.length!==1)return send(r,{err:"בדוברות מגישים תוצר אחד בלבד: תגובה לכתב או SMS."},400);
-  if(p.t!=="s"&&a.length!==2)return send(r,{err:"יש למלא את שני השדות."},400);
-  if(p.t==="s"&&(S.ph==="r4"||S.ph==="r6")&&a[0].length>320)return send(r,{err:"SMS מבצעי חייב להיות קצר (עד 320 תווים)."},400);
-  if(S.ph==="r4"){
-   if(!S.event4){p.pre4=a;p.sent.r4="holding";push();return send(r,{ok:1,pending:1})}
-   if(!p.r4Ack)return send(r,{err:"קודם יש לאשר את עדכון החמ״ל."},409);
-  }
-  addSub({t:p.t,r:S.ph,a,by:p.n});p.sent[S.ph]=1;push();return send(r,{ok:1})}
- if(P==="/api/rate"){
-  const n=Math.round(+b.n),sid=+b.sid;
-  if(!S.cm[b.cid]||!(n>=1&&n<=5)||!S.sub.some(x=>x.id===sid))return send(r,{err:"bad"},400);
-  (S.cr[sid]=S.cr[sid]||{})[b.cid]=n;(S.my[b.cid]=S.my[b.cid]||{})[sid]=n;push();return send(r,{ok:1})}
- if(P==="/api/act"){if(!toks.has(q.headers["x-tok"]))return send(r,{err:"auth"},401);act(String(b.a||""),b.k);return send(r,{ok:1})}
- send(r,{err:"not found"},404);
-}).listen(PORT,()=>console.log("Server on http://localhost:"+PORT+"  (admin: /#admin, screen: /#screen)"));
+const server=http.createServer((req,res)=>{handle(req,res).catch(e=>{console.error(e);if(!res.headersSent)bad(res,'שגיאת שרת',500);else res.end()})});
+server.listen(PORT,'0.0.0.0',()=>console.log(`NEWS404 ${BUILD} on http://0.0.0.0:${PORT}`));
